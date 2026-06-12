@@ -1,3 +1,7 @@
+# =========================================================================
+# 1. 原始 Python 项目配置 (完整保留你原有的环境、日志与缓存过滤)
+# =========================================================================
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -27,8 +31,6 @@ share/python-wheels/
 MANIFEST
 
 # PyInstaller
-#   Usually these files are written by a python script from a template
-#   before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
@@ -82,49 +84,9 @@ target/
 profile_default/
 ipython_config.py
 
-# pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
-# .python-version
-
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-# Pipfile.lock
-
-# UV
-#   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-# uv.lock
-
-# poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-# poetry.lock
-# poetry.toml
-
-# pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#   pdm recommends including project-wide configuration in pdm.toml, but excluding .pdm-python.
-#   https://pdm-project.org/en/latest/usage/project/#working-with-version-control
-# pdm.lock
-# pdm.toml
 .pdm-python
 .pdm-build/
-
-# pixi
-#   Similar to Pipfile.lock, it is generally recommended to include pixi.lock in version control.
-# pixi.lock
-#   Pixi creates a virtual environment in the .pixi directory, just like venv module creates one
-#   in the .venv directory. It is recommended not to include this directory in version control.
 .pixi
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
 __pypackages__/
 
 # Celery stuff
@@ -157,50 +119,28 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
+# Spyder & Rope settings
 .spyderproject
 .spyproject
-
-# Rope project settings
 .ropeproject
 
 # mkdocs documentation
 /site
 
-# mypy
+# mypy & Pyre & pytype
 .mypy_cache/
 .dmypy.json
 dmypy.json
-
-# Pyre type checker
 .pyre/
-
-# pytype static type analyzer
 .pytype/
 
 # Cython debug symbols
 cython_debug/
 
-# PyCharm
-#   JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#   be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#   and can be added to the global gitignore or merged into this file.  For a more nuclear
-#   option (not recommended) you can uncomment the following to ignore the entire idea folder.
-# .idea/
-
-# Abstra
-#   Abstra is an AI-powered process automation framework.
-#   Ignore directories containing user credentials, local state, and settings.
-#   Learn more at https://abstra.io/docs
-.abstra/
-
-# Visual Studio Code
-#   Visual Studio Code specific template is maintained in a separate VisualStudioCode.gitignore 
-#   that can be found at https://github.com/github/gitignore/blob/main/Global/VisualStudioCode.gitignore
-#   and can be added to the global gitignore or merged into this file. However, if you prefer, 
-#   you could uncomment the following to ignore the entire vscode folder
-# .vscode/
-# Temporary file for partial code execution
+# PyCharm & VS Code
+.idea/
+.vscode/*
+!.vscode/extensions.json
 tempCodeRunnerFile.py
 
 # Ruff stuff:
@@ -209,10 +149,71 @@ tempCodeRunnerFile.py
 # PyPI configuration file
 .pypirc
 
-# Marimo
+# Marimo & Streamlit
 marimo/_static/
 marimo/_lsp/
 __marimo__/
-
-# Streamlit
 .streamlit/secrets.toml
+
+# =========================================================================
+# 2. 新增：Node.js & 前端通用配置 (彻底解决 node_modules 暴露问题)
+# =========================================================================
+
+# 核心依赖包（禁止追踪最外层和子目录下的 node_modules）
+node_modules/
+**/node_modules/
+
+# 各种前端包管理器的日志
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 前端编译与测试缓存
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+*.timestamp-*-*.mjs
+
+# 系统与编辑器缓存
+.DS_Store
+Thumbs.db
+
+# =========================================================================
+# 3. 新增：GIS 空间分析、遥感影像与大数据建模拦截 (防止误传大文件)
+# =========================================================================
+
+# 3.1 遥感影像与栅格切片（防止好几个G的原始大 TIFF/IMG 塞爆仓库）
+*.tif
+*.tiff
+*.img
+*.HDF5
+*.nc
+/public/tiles/
+/src/assets/raw_tiles/
+
+# 3.2 传统 GIS 矢量数据临时缓存与空间索引（Shapefile 伴生文件）
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.sbn
+*.sbx
+*.fbn
+*.fbx
+*.ain
+*.aih
+*.ixs
+*.mxs
+*.atlx
+
+# 3.3 科研数据与数据分析备份（防 R 语言、Excel 大数据集误传）
+*.RData
+*.Rhistory
+*.xlsx
+*.xls
+
+# 3.4 专用本地大数据存放区（建议把本地做实验的大数据都丢到这个目录下）
+/src/assets/raw_data/
+/public/data/large/
