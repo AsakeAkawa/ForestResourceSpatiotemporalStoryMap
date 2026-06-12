@@ -1,0 +1,80 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+.DS_Store
+dist
+dist-ssr
+coverage
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+*.tsbuildinfo
+
+.eslintcache
+
+# Cypress
+/cypress/videos/
+/cypress/screenshots/
+
+# Vitest
+__screenshots__/
+
+# Vite
+*.timestamp-*-*.mjs
+
+# ==========================================
+# GIS & Spatial Data Backups (新增：地理空间数据与大文件拦截)
+# ==========================================
+
+# 1. 遥感影像与栅格切片（防误传未切片的原始大 TIFF/IMG）
+*.tif
+*.tiff
+*.img
+*.HDF5
+*.nc
+/public/tiles/
+/src/assets/raw_tiles/
+
+# 2. 传统 GIS 矢量数据临时缓存与依赖文件（Shapefile 等）
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.sbn
+*.sbx
+*.fbn
+*.fbx
+*.ain
+*.aih
+*.ixs
+*.mxs
+*.atlx
+
+# 3. GeoJSON / CSV 地理坐标大数据集（如果是本地演示的小数据，可以手动放行）
+# *.json (注意：不要直接过滤 .json，否则 package.json 会被拦截)
+# 拦截存放庞大原始数据的专用文件夹（建议把本地大文件都丢到这个目录下）
+/src/assets/raw_data/
+/public/data/large/
+
+# 4. 团队科研数据格式（防止误传 R 语言或地理建模数据）
+*.RData
+*.Rhistory
+*.xlsx
+*.xls
