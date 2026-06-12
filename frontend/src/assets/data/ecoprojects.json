@@ -1,0 +1,90 @@
+{
+  "projects": [
+    {
+      "id": "saihanba",
+      "projectCode": "SHFC2601-04-01-01",
+      "name": "塞罕坝机械林场",
+      "category": "防护林类",
+      "region": "华北地区",
+      "startYear": 1962,
+      "status": "持续建设中",
+      "tags": ["三北防护林", "河北围场", "1962"],
+      "geoCoord": [117.2, 42.4],
+      "baseInfo": {
+        "fullName": "河北塞罕坝掉机械林场建设工程",
+        "bgText": "建场前当地气候恶劣，沙化严重，处于‘风沙紧逼北京城’的绝境。国家为阻隔浑善达克沙地南侵，决定建立大型封山育林基地。",
+        "timeLineDesc": "1962年建场；1980s完成初期造林；2002年通过ISO14001环境认证；2025年进入高质量综合管护阶段。",
+        "areaDesc": "地处河北省承德市围场满族蒙古族自治县北部，内蒙古高原南缘，地理跨度大。"
+      },
+      "indicators": {
+        "targets": "全面恢复北方天然天然屏障，构建京津冀绿色防沙带。",
+        "measures": "人工机械造林、针阔混交林改良、精细化育苗、智慧防火网格管护。",
+        "stats": [
+          { "label": "累计治理面积", "value": "115万亩" },
+          { "label": "当前森林覆盖率", "value": "86.0%" },
+          { "label": "林木总蓄积量", "value": "1012万m³" },
+          { "label": "年涵养源水量", "value": "2.84亿m³" }
+        ]
+      },
+      "multimedia": {
+        "audioUrl": "/audio/saihanba_intro.mp3",
+        "videoUrl": "https://www.w3schools.com/html/mov_bbb.mp4",
+        "stories": [
+          { "title": "六女上坝", "content": "1964年，承德女高六位姑娘放弃高考，毅然奔赴塞罕坝，在大棚里顶风冒雪育苗。" }
+        ],
+        "rsImages": {
+          "before": "https://images.unsplash.com/photo-1618083707368-b3823daa2726?auto=format&fit=crop&w=800&q=80",
+          "after": "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=800&q=80"
+        },
+        "timeSteps": [
+          { "year": "1962", "title": "林场建立", "detail": "362名平均年龄不足24岁的创业者奔赴荒原。" },
+          { "year": "1984", "title": "成林初显", "detail": "攻克高原育苗难关，人工林保存面积跃居全国前列。" },
+          { "year": "2017", "title": "卫士地球奖", "detail": "塞罕坝林场建设者荣获联合国‘地球卫士奖’。" }
+        ]
+      }
+    },
+    {
+      "id": "youyu",
+      "projectCode": "SHFC2601-04-01-02",
+      "name": "右玉县防护林",
+      "category": "荒漠治理类",
+      "region": "西北地区",
+      "startYear": 1949,
+      "status": "成果巩固中",
+      "tags": ["毛乌素边缘", "山西右玉", "1949"],
+      "geoCoord": [112.4, 40.0],
+      "baseInfo": {
+        "fullName": "山西右玉县生态荒漠化综合防治工程",
+        "bgText": "地处晋北黄土高原，毛乌素沙漠天然风口，建国初期全县森林覆盖率不足0.3%，沙进人退，面临不毛之地的绝境。",
+        "timeLineDesc": "1949年首任县委书记发起植树；历任班子展开绿色接力；2010年基本消除成片荒漠；2025年转型生态林业经济。",
+        "areaDesc": "山西省朔州市右玉县全域，地处晋蒙交界山口要塞。"
+      },
+      "indicators": {
+        "targets": "将塞上不毛之地彻底改造成生态宜居绿洲，锁住风沙口。",
+        "measures": "全民义务植树、苍头河湿地保护、小流域综合治理、退耕还林衔接。",
+        "stats": [
+          { "label": "全县绿化面积", "value": "169万亩" },
+          { "label": "森林覆盖率", "value": "57.0%" },
+          { "label": "沙化地治理率", "value": "95.5%" },
+          { "label": "林业生态产值", "value": "3.2亿元" }
+        ]
+      },
+      "multimedia": {
+        "audioUrl": "/audio/youyu_intro.mp3",
+        "videoUrl": "https://www.w3schools.com/html/mov_bbb.mp4",
+        "stories": [
+          { "title": "二十任书记的接力", "content": "70多年来，右玉县历任20多任县委书记，关关难过关关过，唯一不变的是手里那把植树锹。" }
+        ],
+        "rsImages": {
+          "before": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80",
+          "after": "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=800&q=80"
+        },
+        "timeSteps": [
+          { "year": "1949", "title": "第一锹土", "detail": "确立‘换班不换向，一任接着一任干’的植树祖训。" },
+          { "year": "2000", "title": "绿化达标", "detail": "全县生态面貌发生根本性扭转，森林覆盖率突破40%。" },
+          { "year": "2020", "title": "绿水青山基地", "detail": "获评国家‘绿水青山就是金山银山’实践创新基地。" }
+        ]
+      }
+    }
+  ]
+}

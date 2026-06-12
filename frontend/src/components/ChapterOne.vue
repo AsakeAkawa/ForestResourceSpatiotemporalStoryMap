@@ -51,17 +51,12 @@
 
       <div class="vertical-axis-wrapper" ref="axisWrapperRef">
         <div class="vertical-track-line"></div>
-        
         <div class="active-slider-cursor" :style="{ top: cursorTop + 'px' }"></div>
-
         <div 
           v-for="(node, idx) in timelineNodes" 
           :key="node.year"
           class="vertical-node"
-          :class="{ 
-            'is-active': currentYear === node.year,
-            'is-milestone': node.isMilestone 
-          }"
+          :class="{ 'is-active': currentYear === node.year, 'is-milestone': node.isMilestone }"
           :style="{ height: nodeHeight + 'px' }"
           @click.stop="selectYear(node.year)"
         >
@@ -74,7 +69,6 @@
           </div>
         </div>
       </div>
-      
       <div class="timeline-drag-hint">↕ 鼠标可在右侧轴区上下拖拽滑动切换年份</div>
     </div>
   </div>
@@ -84,7 +78,6 @@
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
 
-// --- 1. 模拟长时序生态演变大数据库 ---
 const timelineNodes = [
   { year: 1985, isMilestone: false },
   { year: 1990, isMilestone: false },
@@ -109,15 +102,13 @@ const historicalData = {
   2020: { coverage: 23.0, policy: "全面完成新时代首期生态治理蓝图。中国宣布双碳目标，森林作为核心碳汇资产，其战略地位提到前所未有的高度。", achievement: "森林覆盖率正式达到23.04%，中国贡献了全球同期近四分之一的新增绿化面积，成就世界生态治理史上的东方奇迹。", pie: [{ name: '东北区', value: 25 }, { name: '华南区', value: 26 }, { name: '西南区', value: 26 }, { name: '其他', value: 23 }] }
 }
 
-// --- 2. 状态声明 ---
 const currentYear = ref(1985)
 const isPlaying = ref(false)
 const axisWrapperRef = ref(null)
 let playTimer = null
 
-// 拖拽滑动相关变量
 const isDragging = ref(false)
-const nodeHeight = 65 // 每个纵向节点的空间高度
+const nodeHeight = 65
 
 const lineChartRef = ref(null)
 const pieChartRef = ref(null)
@@ -126,15 +117,12 @@ let pieChartInstance = null
 
 const currentNarrative = computed(() => historicalData[currentYear.value])
 
-// 计算当前高亮下游标应该处于的绝对 Y 轴高度
 const cursorTop = computed(() => {
   const idx = timelineNodes.findIndex(n => n.year === currentYear.value)
-  return idx * nodeHeight + 10 // 10px 为微调对齐偏差
+  return idx * nodeHeight + 10
 })
 
-// --- 3. 纵向滑动控制核心算法 ---
 function handleSliderDown(e) {
-  // 排除点击播放按钮
   if (e.target.tagName === 'BUTTON') return
   isDragging.value = true
   calculateYearByPos(e)
@@ -151,21 +139,16 @@ function handleGlobalMouseUp() {
 
 function calculateYearByPos(e) {
   const rect = axisWrapperRef.value.getBoundingClientRect()
-  // 计算鼠标相对时间轴轨道顶部的相对 Y 坐标
   const relativeY = e.clientY - rect.top
-  
-  // 边界约束
   let targetIdx = Math.floor(relativeY / nodeHeight)
   if (targetIdx < 0) targetIdx = 0
   if (targetIdx >= timelineNodes.length) targetIdx = timelineNodes.length - 1
-  
   const targetYear = timelineNodes[targetIdx].year
   if (currentYear.value !== targetYear) {
     currentYear.value = targetYear
   }
 }
 
-// --- 4. 图表与轮播控制 ---
 function initCharts() {
   if (!lineChartRef.value || !pieChartRef.value) return
 
@@ -222,6 +205,7 @@ function selectYear(year) {
   currentYear.value = year
 }
 
+// 轮播平滑控制：Vite 8 下性能最佳
 function togglePlay() {
   isPlaying.value = !isPlaying.value
   if (isPlaying.value) {
@@ -252,82 +236,90 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* 撑满全屏的底层交互层 */
 .chapter-one-container {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9; user-select: none;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9; user-select: none;
 }
 
-/* 🌓 核心视觉：完全对齐首页！从左到页面中间的黑底渐变（完美充当背景，文字更清晰） */
+/* 🌓 黑底平滑渐变背景层 */
 .chapter-one-container::before {
   content: "";
   position: absolute;
   top: 0; left: 0;
   width: 100%; height: 100%;
-  /* 采用与首页一模一样的多阶段平滑渐变，无任何生硬截断，右侧 50% 毫无遮挡显示地图 */
   background: linear-gradient(to right, 
-    rgba(10, 25, 16, 0.95) 0%, 
-    rgba(10, 25, 16, 0.8) 25%, 
-    rgba(10, 25, 16, 0.45) 42%, 
-    rgba(10, 25, 16, 0) 58%
+    rgba(10, 25, 16, 0.98) 0%, 
+    rgba(10, 25, 16, 0.85) 20%, 
+    rgba(10, 25, 16, 0.45) 35%, 
+    rgba(10, 25, 16, 0) 50%
   );
   z-index: 1;
 }
 
-/* ✍️ 艺术化内容容器：不再设置死背景和宽度硬切，只负责排版 */
+/* ✍️ 💡 关键修改点：左侧大屏信息栏宽度进行整体“瘦身”，收紧到 30% 比例，固定锁定 */
 .left-narrative-panel {
   pointer-events: auto;
   position: absolute;
   top: 0; left: 0;
-  width: 42%; /* 严格控制在渐变安全范围内 */
+  width: 30%; /* 原先 42% -> 现精简为 30%，空间更干净精致 */
   height: 100%;
-  padding: 110px 0 40px 6%; /* 左侧留出 6% 的气口，与首页对齐 */
+  padding: 110px 0 40px 4%; /* 略微收窄侧间距 */
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   z-index: 3;
 }
 
-/* 艺术化大字号标题 */
 .active-year-title {
-  font-size: 80px; /* 年份再次放大，视觉冲击力拉满 */
-  font-weight: 900;
-  color: #2ecc71;
-  line-height: 1;
-  font-family: 'Impact', sans-serif;
-  letter-spacing: 2px;
+  font-size: 72px; font-weight: 900; color: #2ecc71; line-height: 1;
+  font-family: 'Impact', sans-serif; letter-spacing: 2px;
   background: linear-gradient(to bottom, #ffffff, #2ecc71);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; text-shadow: 0 4px 20px rgba(0,0,0,0.4);
 }
-.year-unit { font-size: 24px; font-weight: bold; margin-left: 8px; color: #fff; -webkit-text-fill-color: #fff; }
-.narrative-title { font-size: 24px; color: rgba(255,255,255,0.95); font-weight: 800; margin: 8px 0 0 0; letter-spacing: 1px; }
+.year-unit { font-size: 22px; font-weight: bold; margin-left: 6px; color: #fff; -webkit-text-fill-color: #fff; }
+.narrative-title { font-size: 20px; color: rgba(255,255,255,0.95); font-weight: 800; margin: 8px 0 0 0; }
 .art-decorator-line { width: 40px; height: 3px; background: #2ecc71; margin-top: 15px; }
 
-/* 纯文字无框叙事区 */
-.narrative-content { display: flex; flex-direction: column; gap: 25px; margin: 40px 0; }
+/* 💡 关键修改点：文字叙事区升级为纵向弹性自适应滚动域 */
+.narrative-content { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 20px; 
+  margin: 30px 0;
+  overflow-y: auto; /* 核心：超出自动滚动，绝不挤压图表 */
+  padding-right: 10px;
+}
+/* 隐藏局部滚动条但保留滚动特性，维持学术大屏美感 */
+.narrative-content::-webkit-scrollbar { width: 4px; }
+.narrative-content::-webkit-scrollbar-thumb { background: rgba(46, 204, 113, 0.3); border-radius: 2px; }
+
 .narrative-section { background: none; padding: 0; border: none; } 
 .section-art-title {
-  font-size: 13px; color: #2ecc71; font-weight: bold; letter-spacing: 2px;
-  margin-bottom: 8px; text-transform: uppercase; border-left: 2px solid #2ecc71; padding-left: 8px;
+  font-size: 13px; color: #2ecc71; font-weight: bold; letter-spacing: 1px;
+  margin-bottom: 8px; border-left: 2px solid #2ecc71; padding-left: 8px;
 }
 .section-paragraph {
-  font-size: 15px; line-height: 1.8; color: rgba(255, 255, 255, 0.88); margin: 0; text-align: justify;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.6);
+  font-size: 14px; line-height: 1.7; color: rgba(255, 255, 255, 0.85); margin: 0; text-align: justify;
 }
 .highlight-text { color: #ffffff; font-weight: 500; }
 
-/* 图表区：完美融入通透的遮罩底色 */
-.charts-zone { flex: 1; display: flex; flex-direction: column; gap: 20px; min-height: 0; }
+/* 💡 关键修改点：图表高度锁死区，不再受到文字膨胀的影响 */
+.charts-zone { 
+  height: 380px; /* 强制写死统计区图表高度 */
+  display: flex; 
+  flex-direction: column; 
+  gap: 20px; 
+  margin-top: auto; /* 永远固定悬浮固定在最底部 */
+}
 .chart-wrapper { flex: 1; min-height: 0; display: flex; flex-direction: column; background: transparent; padding: 0; }
-.chart-art-title { font-size: 12px; color: rgba(255,255,255,0.4); border-left: 2px solid rgba(255,255,255,0.2); padding-left: 8px; margin-bottom: 5px; }
+.chart-art-title { font-size: 11px; color: rgba(255,255,255,0.4); border-left: 2px solid rgba(255,255,255,0.2); padding-left: 8px; margin-bottom: 5px; }
 .echart-container { flex: 1; width: 100%; min-height: 0; }
 
-/* 📺 地图中央遥感图像高亮占位层 */
+/* 📺 地图中央遥感高亮占位层位置微调 */
 .map-layer-placeholder {
-  position: absolute; top: 50%; left: 58%; transform: translate(-50%, -50%);
-  width: 440px; height: 280px; background: rgba(46, 204, 113, 0.02);
+  position: absolute; top: 50%; left: 52%; transform: translate(-50%, -50%);
+  width: 420px; height: 260px; background: rgba(46, 204, 113, 0.02);
   border: 1px dashed rgba(46, 204, 113, 0.2); border-radius: 4px; z-index: 2;
 }
 .placeholder-border-box { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
@@ -337,74 +329,39 @@ onUnmounted(() => {
 .layer-year { font-size: 18px; font-weight: 800; margin: 0 0 5px 0; color: #ffffff; }
 .layer-status { font-size: 11px; color: rgba(255,255,255,0.3); font-family: monospace; }
 
-/* 🎚️ 3. 右侧悬浮：纵向悬浮时间滑轴（样式微调使其独立高感） */
+/* 🎚️ 右侧悬浮纵向时间轴 */
 .right-vertical-timeline {
-  pointer-events: auto;
-  position: absolute;
+  pointer-events: auto; position: absolute;
   top: 120px; right: 40px; bottom: 50px; width: 160px;
   background: rgba(10, 25, 16, 0.85); backdrop-filter: blur(8px);
   border: 1px solid rgba(46, 204, 113, 0.15); border-radius: 16px;
   padding: 20px 10px; box-sizing: border-box;
   display: flex; flex-direction: column; align-items: center; z-index: 10;
-  box-shadow: -5px 5px 25px rgba(0,0,0,0.5);
-  cursor: ns-resize;
+  box-shadow: -5px 5px 25px rgba(0,0,0,0.5); cursor: ns-resize;
 }
-
 .timeline-header-box { width: 100%; margin-bottom: 20px; display: flex; justify-content: center; }
 .art-play-btn {
   background: transparent; color: #2ecc71; border: 1px solid #2ecc71; padding: 6px 14px;
   border-radius: 15px; font-size: 11px; font-weight: bold; cursor: pointer; transition: all 0.2s; width: 90%;
 }
 .art-play-btn:hover, .art-play-btn.is-playing { background: #2ecc71; color: #fff; box-shadow: 0 0 10px #2ecc71; }
-
 .vertical-axis-wrapper {
-  flex: 1; width: 100%; position: relative;
-  display: flex; flex-direction: column; align-items: flex-start;
-  padding-left: 20px; box-sizing: border-box;
+  flex: 1; width: 100%; position: relative; display: flex; flex-direction: column; align-items: flex-start; padding-left: 20px; box-sizing: border-box;
 }
-.vertical-track-line {
-  position: absolute; top: 15px; bottom: 15px; left: 25px; width: 2px;
-  background: rgba(255,255,255,0.1); z-index: 1;
-}
-
+.vertical-track-line { position: absolute; top: 15px; bottom: 15px; left: 25px; width: 2px; background: rgba(255,255,255,0.1); z-index: 1; }
 .active-slider-cursor {
-  position: absolute; left: 22px; width: 8px; height: 8px;
-  background: #ffffff; border-radius: 50%; z-index: 3;
-  box-shadow: 0 0 12px 4px #2ecc71;
-  transition: top 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: absolute; left: 22px; width: 8px; height: 8px; background: #ffffff; border-radius: 50%; z-index: 3; box-shadow: 0 0 12px 4px #2ecc71; transition: top 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-.vertical-node {
-  position: relative; z-index: 2; display: flex; align-items: center;
-  gap: 15px; width: 100%; cursor: pointer;
-}
-.v-node-dot {
-  width: 8px; height: 8px; background: rgba(255,255,255,0.2); border-radius: 50%;
-  transition: all 0.2s ease; display: flex; align-items: center; justify-content: center;
-}
-.vertical-node:hover .v-node-dot, .vertical-node.is-active .v-node-dot {
-  background: #2ecc71; transform: scale(1.2);
-}
-
-.vertical-node.is-milestone .v-node-dot {
-  width: 14px; height: 14px; background: #e67e22; box-shadow: 0 0 6px #e67e22;
-}
+.vertical-node { position: relative; z-index: 2; display: flex; align-items: center; gap: 15px; width: 100%; cursor: pointer; }
+.v-node-dot { width: 8px; height: 8px; background: rgba(255,255,255,0.2); border-radius: 50%; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
+.vertical-node:hover .v-node-dot, .vertical-node.is-active .v-node-dot { background: #2ecc71; transform: scale(1.2); }
+.vertical-node.is-milestone .v-node-dot { width: 14px; height: 14px; background: #e67e22; box-shadow: 0 0 6px #e67e22; }
 .v-milestone-star { font-size: 8px; color: white; }
-
 .v-node-label { display: flex; flex-direction: column; justify-content: center; }
 .v-node-year { font-size: 13px; color: rgba(255,255,255,0.5); font-weight: 700; font-family: monospace; }
 .vertical-node.is-active .v-node-year { color: #2ecc71; font-size: 15px; }
-
-.v-milestone-name {
-  font-size: 9px; color: #e67e22; font-weight: bold; margin-top: 1px;
-  background: rgba(230,126,34,0.1); padding: 0px 4px; border-radius: 2px;
-  white-space: nowrap; position: absolute; left: 65px;
-}
-
-.timeline-drag-hint {
-  font-size: 9px; color: rgba(255,255,255,0.25); text-align: center;
-  margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px;
-}
+.v-milestone-name { font-size: 9px; color: #e67e22; font-weight: bold; margin-top: 1px; background: rgba(230,126,34,0.1); padding: 0px 4px; border-radius: 2px; white-space: nowrap; position: absolute; left: 65px; }
+.timeline-drag-hint { font-size: 9px; color: rgba(255,255,255,0.25); text-align: center; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 8px; }
 
 @keyframes radarScan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
 </style>
