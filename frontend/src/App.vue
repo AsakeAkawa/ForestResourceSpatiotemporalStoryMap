@@ -1,9 +1,7 @@
 <template>
-  <!-- 💡 已移除强制缩放 wrapper，直接回归标准的流式响应式容器 -->
   <div class="story-map-container">
     
-    <!-- 悬浮胶囊导航栏 -->
-    <div class="top-minimal-nav-bar">
+    <div class="top-minimal-nav-bar" :class="{ 'ui-hidden': isImmersiveMode }">
       <div class="nav-links-container">
         <span 
           v-for="(chapter, index) in chapters" 
@@ -17,8 +15,7 @@
       </div>
     </div>
 
-    <!-- 💡 保留：右上角多图源适配切换面板 -->
-    <div class="map-source-selector">
+    <div class="map-source-selector" :class="{ 'ui-hidden': isImmersiveMode }">
       <div 
         v-for="source in mapSources" 
         :key="source.id"
@@ -32,11 +29,13 @@
 
     <div v-if="$route.path === '/'" class="chapter-component-container">
       <transition name="fade-layer" mode="out-in">
-        <component :is="activeComponent" />
+        <component 
+          :is="activeComponent" 
+          @toggle-immersive="handleImmersiveToggle"
+        />
       </transition>
     </div>
 
-    <!-- 底层地图容器 -->
     <div id="ol-map-container"></div>
 
     <router-view />
@@ -44,7 +43,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 import 'ol/ol.css'
 import Map from 'ol/Map'
@@ -76,16 +75,21 @@ const chapters = [
 const currentIndex = ref(0)
 const activeComponent = computed(() => chapters[currentIndex.value].component)
 
+// 🎬 新增：全屏沉浸模式状态
+const isImmersiveMode = ref(false)
+function handleImmersiveToggle(status) {
+  isImmersiveMode.value = status
+}
+
 let map = null
 let view = null
 let baseTileLayer = null
 
-// 图源切换配置项
-const currentSourceId = ref('osm')
+const currentSourceId = ref('gaode-sat')
 const mapSources = [
-  { id: 'osm', name: 'OSM底图' },
+  { id: 'gaode-sat', name: '卫星遥感' },
   { id: 'gaode-vec', name: '高德矢量' },
-  { id: 'gaode-sat', name: '卫星遥感' }
+  { id: 'osm', name: 'OSM底图' }
 ]
 
 onMounted(() => {
@@ -96,10 +100,9 @@ onMounted(() => {
     minZoom: 4
   })
 
-  // 默认优先调用强 HTTPS 修正过的全球 OSM 镜像源
   baseTileLayer = new TileLayer({
-    source: new OSM({
-      url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+    source: new XYZ({
+      url: 'https://webst0{1-4}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}'
     })
   })
 
@@ -117,7 +120,6 @@ onMounted(() => {
   })
   map.addControl(scaleControl)
 
-  // 全局共享变量定义
   window.olMap = map
   window.ol = {
     proj: { fromLonLat, transform },
@@ -127,9 +129,13 @@ onMounted(() => {
     layer: { Vector: VectorLayer },
     style: { Style, Stroke, Fill, Circle }
   }
+
+  // 兜底：全局监听跨组件原生事件
+  window.addEventListener('global-immersive-toggle', (e) => {
+    isImmersiveMode.value = e.detail
+  })
 })
 
-// 多图源热切换控制器
 function changeMapSource(sourceId) {
   if (!baseTileLayer || currentSourceId.value === sourceId) return
   currentSourceId.value = sourceId
@@ -145,15 +151,22 @@ function changeMapSource(sourceId) {
   
   if (newSource) {
     baseTileLayer.setSource(newSource)
-    
   }
 }
 
 function switchPage(index) {
   if (index === currentIndex.value) return
   currentIndex.value = index
-  if (index === 0 && view) {
-    view.animate({ center: fromLonLat([104.0, 35.0]), zoom: 5, duration: 1000 })
+  
+  // 切换页面时，自动恢复UI显示
+  isImmersiveMode.value = false
+  
+  if (!view) return
+  
+  if (index === 0 || index === 1 || index === 2) {
+    view.animate({ center: fromLonLat([104.0, 35.0]), zoom: 5, duration: 1200 })
+  } else if (index === 3) {
+    view.animate({ center: fromLonLat([108.28, 40.38]), zoom: 8, duration: 1200 })
   }
 }
 </script>
@@ -161,7 +174,6 @@ function switchPage(index) {
 <style scoped>
 body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #050d08; }
 
-/* 恢复纯净的满屏流动容器布局 */
 .story-map-container { 
   width: 100vw; 
   height: 100vh; 
@@ -169,7 +181,7 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color:
   overflow: hidden; 
 }
 
-/* 悬浮胶囊导航栏 */
+/* 🎬 悬浮胶囊导航栏：添加过渡动画 */
 .top-minimal-nav-bar {
   position: absolute;
   top: 30px; left: 0; width: 100%;
@@ -177,7 +189,31 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color:
   display: flex;
   justify-content: center;
   pointer-events: none;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
 }
+/* 🎬 右上角多图源适配切换面板：添加过渡动画 */
+.map-source-selector {
+  position: absolute;
+  top: 30px;
+  right: 40px;
+  z-index: 10;
+  display: flex;
+  background-color: rgba(10, 25, 16, 0.8);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(46, 204, 113, 0.2);
+  border-radius: 15px;
+  padding: 4px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+}
+
+/* 🎬 激活沉浸模式时的隐藏样式：向上离屏滑出并淡出 */
+.ui-hidden {
+  opacity: 0 !important;
+  transform: translateY(-50px) !important;
+  pointer-events: none !important;
+}
+
 .nav-links-container { display: flex; gap: 30px; }
 .nav-item {
   pointer-events: auto;
@@ -194,20 +230,6 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color:
 }
 .nav-item.active { background-color: rgba(27, 77, 47, 1); border: 1px solid rgba(46, 204, 113, 0.4); }
 
-/* 右上角多图源适配切换面板样式 */
-.map-source-selector {
-  position: absolute;
-  top: 30px;
-  right: 40px;
-  z-index: 10;
-  display: flex;
-  background-color: rgba(10, 25, 16, 0.8);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(46, 204, 113, 0.2);
-  border-radius: 15px;
-  padding: 4px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-}
 .selector-item {
   font-size: 12px;
   font-weight: bold;
