@@ -15,15 +15,22 @@
       </div>
     </div>
 
-    <div class="map-source-selector" :class="{ 'ui-hidden': isImmersiveMode }">
-      <div 
-        v-for="source in mapSources" 
-        :key="source.id"
-        class="selector-item"
-        :class="{ active: currentSourceId === source.id }"
-        @click="changeMapSource(source.id)"
-      >
-        {{ source.name }}
+    <div class="top-right-group" :class="{ 'ui-hidden': isImmersiveMode }">
+      <div class="map-source-selector">
+        <div
+          v-for="source in mapSources"
+          :key="source.id"
+          class="selector-item"
+          :class="{ active: currentSourceId === source.id }"
+          @click="changeMapSource(source.id)"
+        >
+          {{ source.name }}
+        </div>
+      </div>
+      <span class="top-right-sep"></span>
+      <div class="user-session-bar">
+        <span class="user-avatar">{{ userInitial }}</span>
+        <span class="logout-action" @click="doLogout">退出</span>
       </div>
     </div>
 
@@ -43,7 +50,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 import 'ol/ol.css'
 import Map from 'ol/Map'
@@ -79,6 +89,15 @@ const activeComponent = computed(() => chapters[currentIndex.value].component)
 const isImmersiveMode = ref(false)
 function handleImmersiveToggle(status) {
   isImmersiveMode.value = status
+}
+
+// 🔐 用户会话信息（从 localStorage 读取，刷新后保持登录态）
+const loggedInUser = ref(localStorage.getItem('forest_username') || '')
+const userInitial = computed(() => loggedInUser.value ? loggedInUser.value.charAt(0).toUpperCase() : 'U')
+function doLogout() {
+  localStorage.removeItem('forest_isLoggedIn')
+  localStorage.removeItem('forest_username')
+  router.push('/login')
 }
 
 let map = null
@@ -191,13 +210,15 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color:
   pointer-events: none;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
 }
-/* 🎬 右上角多图源适配切换面板：添加过渡动画 */
-.map-source-selector {
+/* 🎬 右上角组合：底图切换 + 用户信息 */
+.top-right-group {
   position: absolute;
   top: 30px;
   right: 40px;
   z-index: 10;
   display: flex;
+  align-items: center;
+  gap: 0;
   background-color: rgba(10, 25, 16, 0.8);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(46, 204, 113, 0.2);
@@ -205,6 +226,47 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color:
   padding: 4px;
   box-shadow: 0 4px 15px rgba(0,0,0,0.4);
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+}
+
+.map-source-selector {
+  display: flex;
+}
+
+.top-right-sep {
+  width: 1px; height: 18px;
+  background: rgba(255,255,255,0.1);
+  margin: 0 4px;
+}
+
+.user-session-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px 0 0;
+}
+
+.user-avatar {
+  width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  background-color: #1b4d2f;
+  color: #2ecc71;
+  font-size: 12px; font-weight: 900;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.logout-action {
+  font-size: 12px; font-weight: 500;
+  color: rgba(255,255,255,0.45);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  padding: 4px 6px;
+  border-radius: 10px;
+}
+
+.logout-action:hover {
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.08);
 }
 
 /* 🎬 激活沉浸模式时的隐藏样式：向上离屏滑出并淡出 */
