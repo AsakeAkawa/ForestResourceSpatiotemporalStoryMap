@@ -2,7 +2,7 @@
   <div class="story-map-container">
     
     <div class="top-minimal-nav-bar" :class="{ 'ui-hidden': isImmersiveMode }">
-      <div class="nav-links-container">
+      <div class="nav-links-container apple-blur-box">
         <span 
           v-for="(chapter, index) in chapters" 
           :key="index"
@@ -15,7 +15,7 @@
       </div>
     </div>
 
-    <div class="top-right-group" :class="{ 'ui-hidden': isImmersiveMode }">
+    <div class="top-right-group apple-blur-box" :class="{ 'ui-hidden': isImmersiveMode }">
       <div class="map-source-selector">
         <div
           v-for="source in mapSources"
@@ -85,13 +85,11 @@ const chapters = [
 const currentIndex = ref(0)
 const activeComponent = computed(() => chapters[currentIndex.value].component)
 
-// 🎬 新增：全屏沉浸模式状态
 const isImmersiveMode = ref(false)
 function handleImmersiveToggle(status) {
   isImmersiveMode.value = status
 }
 
-// 🔐 用户会话信息（从 localStorage 读取，刷新后保持登录态）
 const loggedInUser = ref(localStorage.getItem('forest_username') || '')
 const userInitial = computed(() => loggedInUser.value ? loggedInUser.value.charAt(0).toUpperCase() : 'U')
 function doLogout() {
@@ -102,11 +100,12 @@ function doLogout() {
 
 let map = null
 let view = null
-let baseTileLayer = null
+const layersPool = {}
 
 const currentSourceId = ref('gaode-sat')
 const mapSources = [
   { id: 'gaode-sat', name: '卫星遥感' },
+  { id: 'arcgis-dem', name: 'DEM' },
   { id: 'gaode-vec', name: '高德矢量' },
   { id: 'osm', name: 'OSM底图' }
 ]
@@ -119,15 +118,38 @@ onMounted(() => {
     minZoom: 4
   })
 
-  baseTileLayer = new TileLayer({
+  layersPool['gaode-sat'] = new TileLayer({
+    visible: true,
+    source: new XYZ({ url: 'https://webst0{1-4}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}' })
+  })
+
+  layersPool['gaode-vec'] = new TileLayer({
+    visible: false,
+    source: new XYZ({ url: 'https://webrd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}' })
+  })
+
+  layersPool['osm'] = new TileLayer({
+    visible: false,
+    source: new OSM({ url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png' })
+  })
+
+  layersPool['arcgis-dem'] = new TileLayer({
+    visible: false,
+    className: 'dark-dem-layer', 
     source: new XYZ({
-      url: 'https://webst0{1-4}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}'
+      url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Shaded_Relief/MapServer/tile/{z}/{y}/{x}',
+      crossOrigin: 'anonymous'
     })
   })
 
   map = new Map({
     target: 'ol-map-container',
-    layers: [baseTileLayer],
+    layers: [
+      layersPool['gaode-sat'],
+      layersPool['gaode-vec'],
+      layersPool['osm'],
+      layersPool['arcgis-dem']
+    ],
     view: view,
     controls: [] 
   })
@@ -149,37 +171,24 @@ onMounted(() => {
     style: { Style, Stroke, Fill, Circle }
   }
 
-  // 兜底：全局监听跨组件原生事件
   window.addEventListener('global-immersive-toggle', (e) => {
     isImmersiveMode.value = e.detail
   })
 })
 
 function changeMapSource(sourceId) {
-  if (!baseTileLayer || currentSourceId.value === sourceId) return
+  if (currentSourceId.value === sourceId) return
   currentSourceId.value = sourceId
   
-  let newSource = null
-  if (sourceId === 'osm') {
-    newSource = new OSM({ url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png' })
-  } else if (sourceId === 'gaode-vec') {
-    newSource = new XYZ({ url: 'https://webrd0{1-4}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}' })
-  } else if (sourceId === 'gaode-sat') {
-    newSource = new XYZ({ url: 'https://webst0{1-4}.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}' })
-  }
-  
-  if (newSource) {
-    baseTileLayer.setSource(newSource)
-  }
+  Object.keys(layersPool).forEach(key => {
+    layersPool[key].setVisible(key === sourceId)
+  })
 }
 
 function switchPage(index) {
   if (index === currentIndex.value) return
   currentIndex.value = index
-  
-  // 切换页面时，自动恢复UI显示
   isImmersiveMode.value = false
-  
   if (!view) return
   
   if (index === 0 || index === 1 || index === 2) {
@@ -200,7 +209,18 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color:
   overflow: hidden; 
 }
 
-/* 🎬 悬浮胶囊导航栏：添加过渡动画 */
+/* 💡 地形底图 - 无滤镜，保留原始DEM样式 */
+
+/* 🍏 核心复刻：苹果标准高级毛玻璃基类 */
+.apple-blur-box {
+  background: rgba(255, 255, 255, 0.06) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+/* 🎬 顶部胶囊导航外盒：恢复至顶部居中分布 */
 .top-minimal-nav-bar {
   position: absolute;
   top: 30px; left: 0; width: 100%;
@@ -210,7 +230,38 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color:
   pointer-events: none;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
 }
-/* 🎬 右上角组合：底图切换 + 用户信息 */
+
+.nav-links-container { 
+  display: flex; 
+  gap: 8px; 
+  padding: 5px;
+  border-radius: 24px;
+  pointer-events: auto;
+}
+
+/* 导航项升级：苹果风微弹交互 */
+.nav-item {
+  font-size: 13.5px; 
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.7); 
+  padding: 10px 24px;
+  border-radius: 19px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1); 
+  user-select: none;
+}
+.nav-item:hover { 
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.08);
+}
+.nav-item.active { 
+  background-color: rgba(46, 204, 113, 0.2); 
+  color: #2ecc71;
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  box-shadow: 0 4px 12px rgba(46, 204, 113, 0.15);
+}
+
+/* 🎬 右上角控制组 */
 .top-right-group {
   position: absolute;
   top: 30px;
@@ -218,101 +269,59 @@ body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color:
   z-index: 10;
   display: flex;
   align-items: center;
-  gap: 0;
-  background-color: rgba(10, 25, 16, 0.8);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(46, 204, 113, 0.2);
-  border-radius: 15px;
+  border-radius: 16px;
   padding: 4px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.4);
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
 }
 
-.map-source-selector {
-  display: flex;
-}
-
-.top-right-sep {
-  width: 1px; height: 18px;
-  background: rgba(255,255,255,0.1);
-  margin: 0 4px;
-}
-
-.user-session-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 6px 0 0;
-}
-
+.map-source-selector { display: flex; }
+.top-right-sep { width: 1px; height: 16px; background: rgba(255, 255, 255, 0.15); margin: 0 4px; }
+.user-session-bar { display: flex; align-items: center; gap: 8px; padding: 0 6px 0 0; }
 .user-avatar {
   width: 26px; height: 26px;
   display: flex; align-items: center; justify-content: center;
-  background-color: #1b4d2f;
-  color: #2ecc71;
-  font-size: 12px; font-weight: 900;
-  border-radius: 50%;
-  flex-shrink: 0;
+  background-color: rgba(46, 204, 113, 0.2); color: #2ecc71;
+  font-size: 11px; font-weight: 900; border-radius: 50%; flex-shrink: 0;
+  border: 1px solid rgba(46, 204, 113, 0.25);
 }
-
 .logout-action {
-  font-size: 12px; font-weight: 500;
-  color: rgba(255,255,255,0.45);
-  cursor: pointer;
-  transition: color 0.2s ease;
-  padding: 4px 6px;
-  border-radius: 10px;
+  font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.5);
+  cursor: pointer; transition: color 0.2s ease, background 0.2s; padding: 4px 8px; border-radius: 8px;
+}
+.logout-action:hover { color: #ff6b6b; background: rgba(255, 107, 107, 0.1); }
+
+.selector-item {
+  font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.6);
+  padding: 6px 14px; border-radius: 12px; cursor: pointer; transition: all 0.2s ease;
+}
+.selector-item:hover { color: #fff; background-color: rgba(255, 255, 255, 0.05); }
+.selector-item.active {
+  background-color: rgba(46, 204, 113, 0.2); color: #2ecc71; 
+  border: 1px solid rgba(46, 204, 113, 0.15);
 }
 
-.logout-action:hover {
-  color: #e74c3c;
-  background: rgba(231, 76, 60, 0.08);
-}
-
-/* 🎬 激活沉浸模式时的隐藏样式：向上离屏滑出并淡出 */
+/* 🎬 隐藏逻辑调回原本的顶部滑出 */
 .ui-hidden {
   opacity: 0 !important;
   transform: translateY(-50px) !important;
   pointer-events: none !important;
 }
 
-.nav-links-container { display: flex; gap: 30px; }
-.nav-item {
-  pointer-events: auto;
-  font-size: 14px; font-weight: bold;
-  color: rgba(255, 255, 255, 0.85); background-color: rgba(27, 77, 47, 0.75);
-  backdrop-filter: blur(6px); padding: 10px 22px; border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); user-select: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.nav-item:hover, .nav-item.active {
-  background-color: rgba(27, 77, 47, 0.95); color: #2ecc71;
-  transform: translateY(-2px); box-shadow: 0 6px 20px rgba(46, 204, 113, 0.3);
-}
-.nav-item.active { background-color: rgba(27, 77, 47, 1); border: 1px solid rgba(46, 204, 113, 0.4); }
-
-.selector-item {
-  font-size: 12px;
-  font-weight: bold;
-  color: rgba(255,255,255,0.6);
-  padding: 6px 14px;
-  border-radius: 11px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.selector-item:hover { color: #fff; }
-.selector-item.active {
-  background-color: #1b4d2f;
-  color: #2ecc71;
-  box-shadow: 0 2px 8px rgba(46,204,113,0.2);
+/* 🧱 恢复内容容器的全屏无缝边距 */
+.chapter-component-container { 
+  position: absolute; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%; 
+  pointer-events: none; 
+  z-index: 8; 
 }
 
-.chapter-component-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 8; }
 #ol-map-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
 
 :deep(.custom-scale-line) {
-  position: absolute; bottom: 20px; left: 20px;
+  position: absolute; bottom: 20px; left: 20px; /* 比例尺重回左下角 */
   background: rgba(10, 25, 16, 0.75); border: 1px solid rgba(46, 204, 113, 0.3);
   border-top: none; color: #2ecc71; font-size: 11px;
   text-align: center; padding: 2px 6px; z-index: 5;

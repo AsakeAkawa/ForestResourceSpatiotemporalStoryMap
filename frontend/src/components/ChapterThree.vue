@@ -1,8 +1,8 @@
 <template>
   <div class="gee-analysis-dashboard">
-    <aside class="sidebar-control">
+    <aside class="sidebar-control apple-blur-panel">
       <div class="brand-title">
-        <h2>区域遥感数据实时分析系统</h2>
+        <h2 class="text-glow-title">区域遥感数据实时分析系统</h2>
         <span class="system-code">MODULE // SHFC2601-05</span>
       </div>
 
@@ -92,39 +92,39 @@
         </section>
       </div>
 
-      <footer class="panel-footer">
+      <div class="panel-footer mic-card">
         <div class="export-header">
           <h3>分析结果导出 (05-03)</h3>
         </div>
         <div class="export-actions">
-          <button @click="executeExport('TIFF')">GeoTIFF 栅格</button>
+          <button @click="executeExport('TIFF')">GeoTIFF</button>
           <button @click="executeExport('PNG')">PNG 专题图</button>
-          <button @click="executeExport('PDF')">PDF 面积报告</button>
+          <button @click="executeExport('PDF')">面积报告</button>
         </div>
-      </footer>
+      </div>
     </aside>
 
     <main class="main-display">
       <section class="map-viewport">
-        <div v-if="isComputing" class="gis-loading-overlay">
+        <div v-if="isComputing" class="gis-loading-overlay apple-blur-panel">
           <div class="radar-scan"></div>
-          <p>正在拉取 Landsat/Sentinel-2 影像计算数据...</p>
+          <p class="loading-text">正在拉取 Landsat/Sentinel-2 影像计算数据...</p>
         </div>
 
         <div class="map-canvas-placeholder">
           <div class="crosshair-center"></div>
-          <div class="status-badge">
-            {{ activeSection === 'index' ? '单期辐射反演状态' : '时空两期差分状态' }}
+          <div class="status-badge apple-blur-panel text-glow-green">
+            {{ activeSection === 'index' ? '📡 单期辐射反演状态' : '📡 时空两期差分状态' }}
           </div>
-          <div class="spatial-info">
+          <div class="spatial-info apple-blur-panel">
             <p class="coordinate-text">中心坐标: 108°17'E, 40°11'N | 投影系: WGS 84 / UTM zone 49N</p>
-            <p class="target-text">
+            <p class="target-text text-glow-green">
               当前观测：{{ activeSection === 'index' ? `${calcConfig.year}年 / 区域: ${calcConfig.region} / 指标: ${calcConfig.indicator}` : `时段: ${compareConfig.startYear}-${compareConfig.endYear} / 指标: ${compareConfig.indicator} 差分` }}
             </p>
           </div>
         </div>
 
-        <div class="gis-legend">
+        <div class="gis-legend apple-blur-panel">
           <div class="legend-title">{{ activeLegend.title }}</div>
           <div class="legend-scale">
             <span v-for="(color, i) in activeLegend.colors" :key="i" :style="{ backgroundColor: color }"></span>
@@ -136,7 +136,7 @@
       </section>
 
       <section class="analytics-panel">
-        <div class="chart-container">
+        <div class="chart-container apple-blur-panel">
           <div ref="chartDom" class="chart-core"></div>
         </div>
       </section>
@@ -151,9 +151,9 @@ import * as echarts from "echarts"
 const yearRange = Array.from({ length: 2024 - 1985 + 1 }, (_, i) => 1985 + i)
 const indicatorMap = {
   FVC: "植被覆盖度 (Fractional Vegetation Cover)",
-  NDWI: "归一化水体指数 (Normalized Difference Water Index)",
+  NDWI: "归一化水体指数 (Normalized Water Index)",
   BSI: "裸土指数 (Bare Soil Index)",
-  RSEI: "遥感生态指数 (Remote Sensing Ecological Index)"
+  RSEI: "遥感生态指数 (Remote Ecological Index)"
 }
 
 const activeSection = ref("index") 
@@ -241,22 +241,24 @@ const syncVisualizations = () => {
     const currentData = indexMockData[calcConfig.indicator] || [0.1, 0.2, 0.3, 0.4, 0.5]
 
     chartInstance.setOption({
+      backgroundColor: 'transparent',
       title: { 
         text: `库布其沙漠 ${calcConfig.indicator} 宏观历史恢复演变趋势`, 
-        textStyle: { color: '#2ecc71', fontSize: 15, fontWeight: '600' } 
+        textStyle: { color: '#ffffff', fontSize: 14, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.7)', textShadowBlur: 4 } 
       },
-      tooltip: { trigger: 'axis', backgroundColor: '#0a1910', borderColor: 'rgba(46, 204, 113, 0.2)', textStyle: { color: '#fff', fontSize: 13 } },
-      grid: { left: '50', right: '25', top: '45', bottom: '35' },
-      xAxis: { type: 'category', data: ['1985', '1995', '2005', '2015', '2024'], axisLine: { lineStyle: { color: 'rgba(46, 204, 113, 0.15)' } }, axisLabel: { color: '#a5bccc', fontSize: 12 } },
-      yAxis: { type: 'value', min: 0, max: 1, splitLine: { lineStyle: { color: 'rgba(46, 204, 113, 0.03)' } }, axisLabel: { color: '#a5bccc', fontSize: 12 } },
+      tooltip: { trigger: 'axis', backgroundColor: 'rgba(6, 18, 12, 0.95)', borderColor: '#2ecc71', textStyle: { color: '#fff', fontSize: 13 } },
+      grid: { left: '55', right: '25', top: '45', bottom: '35' },
+      xAxis: { type: 'category', data: ['1985', '1995', '2005', '2015', '2024'], axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }, axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 500 } },
+      yAxis: { type: 'value', min: 0, max: 1, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } }, axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 500 } },
       series: [{
         name: calcConfig.indicator,
         type: 'line',
         smooth: true,
         color: '#2ecc71',
+        lineStyle: { width: 2.5 },
         areaStyle: {
           color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(46, 204, 113, 0.2)' },
+            { offset: 0, color: 'rgba(46, 204, 113, 0.25)' },
             { offset: 1, color: 'rgba(46, 204, 113, 0)' }
           ])
         },
@@ -265,17 +267,18 @@ const syncVisualizations = () => {
     }, true)
   } else {
     chartInstance.setOption({
+      backgroundColor: 'transparent',
       title: { 
         text: `时段 (${compareConfig.startYear}-${compareConfig.endYear}) 像元级生态等级转移斑块占比`, 
-        textStyle: { color: '#2ecc71', fontSize: 15, fontWeight: '600' } 
+        textStyle: { color: '#ffffff', fontSize: 14, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.7)', textShadowBlur: 4 } 
       },
-      tooltip: { trigger: 'item', backgroundColor: '#0a1910', borderColor: 'rgba(46, 204, 113, 0.2)', formatter: '{b} : {c}%', textStyle: { fontSize: 13 } },
-      grid: { left: '50', right: '25', top: '45', bottom: '35' },
-      xAxis: { type: 'category', data: ['显著退化', '轻微退化', '基本不变', '轻微改善', '显著改善'], axisLine: { lineStyle: { color: 'rgba(46, 204, 113, 0.15)' } }, axisLabel: { color: '#a5bccc', fontSize: 12 } },
-      yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(46, 204, 113, 0.03)' } }, axisLabel: { color: '#a5bccc', fontSize: 12 } },
+      tooltip: { trigger: 'item', backgroundColor: 'rgba(6, 18, 12, 0.95)', borderColor: '#2ecc71', formatter: '{b} : {c}%', textStyle: { color: '#fff', fontSize: 13 } },
+      grid: { left: '55', right: '25', top: '45', bottom: '35' },
+      xAxis: { type: 'category', data: ['显著退化', '轻微退化', '基本不变', '轻微改善', '显著改善'], axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }, axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 500 } },
+      yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } }, axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 500 } },
       series: [{
         type: 'bar',
-        barWidth: '40%',
+        barWidth: '35%',
         data: [
           { value: 4.2, itemStyle: { color: '#e74c3c' } },
           { value: 9.8, itemStyle: { color: '#e67e22' } },
@@ -300,109 +303,132 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 保持全屏穿透视图层，不破坏页面比例 */
 .gee-analysis-dashboard {
   display: flex;
   width: 100vw;
   height: 100vh;
   background: transparent;
-  color: #dae3eb;
+  color: #e2eaf0;
   font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   overflow: hidden;
   pointer-events: none;
   box-sizing: border-box;
 }
 
-/* ==================== 左侧控制侧边栏样式（原汁原味位置） ==================== */
+/* 🍏 统一高级毛玻璃重构：融入森林暗绿压光，防止卫星杂色图穿透 */
+.apple-blur-panel {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(0, 0, 0, 0.25) 100%) !important;
+  background-color: rgba(6, 18, 12, 0.55) !important; /* 暗绿压光板 */
+  backdrop-filter: blur(25px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(160%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  box-shadow: 0 12px 42px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* 💡 文字物理阴影突围 */
+.text-glow-title {
+  font-size: 19px; 
+  font-weight: 700; 
+  color: #ffffff !important; 
+  letter-spacing: 0.5px; 
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+.text-glow-green {
+  color: #2ecc71 !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 10px rgba(46, 204, 113, 0.4);
+}
+
+/* ==================== 左侧控制侧边栏样式 ==================== */
 .sidebar-control {
   width: 350px;
   height: 100%;
-  background: rgba(10, 25, 16, 0.75); /* 深绿半透明底框 */
-  backdrop-filter: blur(8px);
-  border-right: 1px solid rgba(255, 255, 255, 0.04); /* 极弱化边界线条 */
-  padding: 24px; /* 彻底还原原本位置与间距 */
+  padding: 24px;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5); /* 靠阴影平滑过渡边界 */
   z-index: 10;
   pointer-events: auto;
   box-sizing: border-box;
 }
 
-.brand-title h2 { font-size: 19px; font-weight: 600; color: #ffffff; letter-spacing: 0.5px; margin: 0; }
-.system-code { font-size: 11px; color: #2ecc71; font-family: monospace; background: rgba(46, 204, 113, 0.12); padding: 3px 8px; border-radius: 3px; display: inline-block; margin-top: 6px; font-weight: bold; }
+.system-code { font-size: 10.5px; color: #2ecc71; font-family: monospace; background: rgba(46, 204, 113, 0.15); padding: 3px 8px; border-radius: 4px; display: inline-block; margin-top: 6px; font-weight: bold; border: 1px solid rgba(46, 204, 113, 0.2); }
 
-/* 模块导航 */
-.module-nav { display: flex; gap: 8px; margin-top: 24px; background: rgba(5, 15, 10, 0.8); padding: 4px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.03); }
-.module-nav button { flex: 1; padding: 10px 0; background: transparent; border: none; color: #a5bccc; font-size: 14px; cursor: pointer; border-radius: 4px; transition: all 0.2s; font-weight: 500; }
-.module-nav button .nav-id { font-family: monospace; font-size: 12px; opacity: 0.7; margin-right: 2px; }
-.module-nav button.active { background: #1b4d2f; color: #2ecc71; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+/* 模块导航弹性盒 */
+.module-nav { display: flex; gap: 8px; margin-top: 22px; background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); }
+.module-nav button { flex: 1; padding: 10px 0; background: transparent; border: 1px solid transparent; color: rgba(255,255,255,0.55); font-size: 13.5px; cursor: pointer; border-radius: 6px; transition: all 0.2s; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.module-nav button:hover { color: #ffffff; background: rgba(255,255,255,0.05); }
+.module-nav button .nav-id { font-family: monospace; font-size: 11px; opacity: 0.6; margin-right: 2px; }
+.module-nav button.active { background: rgba(46, 204, 113, 0.18); color: #2ecc71; font-weight: 700; border: 1px solid rgba(46, 204, 113, 0.3); text-shadow: none; }
 
 .panel-body { flex: 1; overflow-y: auto; padding-right: 2px; margin-top: 15px; }
 .panel-body::-webkit-scrollbar { width: 4px; }
 .panel-body::-webkit-scrollbar-thumb { background: #1b4d2f; border-radius: 2px; }
 
-/* 交互表单 */
-.setting-item { margin-bottom: 22px; }
-.setting-label { display: block; font-size: 14px; color: #ffffff; margin-bottom: 8px; font-weight: 500; }
-.gis-select { width: 100%; padding: 12px; background: rgba(10, 25, 16, 0.85); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 4px; outline: none; font-size: 14.5px; cursor: pointer; transition: border-color 0.2s; }
-.gis-select:focus { border-color: #2ecc71; }
+/* 交互表单项优化 */
+.setting-item { margin-bottom: 20px; }
+.setting-label { display: block; font-size: 13px; color: rgba(255,255,255,0.85); margin-bottom: 8px; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.gis-select { width: 100%; padding: 11px 14px; background: rgba(0, 0, 0, 0.35); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 8px; outline: none; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2); }
+.gis-select:focus { border-color: #2ecc71; background: rgba(6, 18, 12, 0.7); }
+.gis-select option { background-color: #0c1c13; color: #fff; }
 
-/* 遥感指标卡片 */
+/* 遥感指标卡片格栅 */
 .indicator-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-.indicator-card { background: rgba(10, 25, 16, 0.6); border: 1px solid rgba(255, 255, 255, 0.04); padding: 12px; border-radius: 4px; cursor: pointer; transition: all 0.2s; }
-.indicator-card:hover { border-color: rgba(46, 204, 113, 0.3); background: rgba(27, 77, 47, 0.15); }
-.indicator-card.selected { border-color: #2ecc71; background: rgba(46, 204, 113, 0.08); }
+.indicator-card { background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.08); padding: 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+.indicator-card:hover { border-color: rgba(46, 204, 113, 0.4); background: rgba(46, 204, 113, 0.05); }
+.indicator-card.selected { border-color: #2ecc71; background: rgba(46, 204, 113, 0.12); box-shadow: 0 0 10px rgba(46,204,113,0.1); }
 .card-header { display: flex; align-items: center; gap: 8px; }
-.card-header .dot { width: 6px; height: 6px; border-radius: 50%; background: #2c3e50; }
+.card-header .dot { width: 6px; height: 6px; border-radius: 50%; background: #34495e; }
 .indicator-card.selected .card-header .dot { background: #2ecc71; box-shadow: 0 0 6px #2ecc71; }
-.card-header .title { font-size: 14px; font-weight: bold; color: #ffffff; }
-.indicator-card .desc { font-size: 11px; color: #a5bccc; margin-top: 6px; line-height: 1.35; transform: scale(0.95); transform-origin: left top; }
+.card-header .title { font-size: 13.5px; font-weight: 700; color: #ffffff; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.indicator-card .desc { font-size: 11px; color: rgba(255,255,255,0.45); margin-top: 6px; line-height: 1.35; transform: scale(0.95); transform-origin: left top; font-weight: 500; }
+.indicator-card.selected .desc { color: rgba(255,255,255,0.75); }
 
-.gis-btn { width: 100%; padding: 14px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; transition: all 0.2s; margin-top: 6px; }
-.gis-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-primary { background: #2ecc71; color: #0a1910; }
-.btn-warn { background: #e67e22; color: #ffffff; }
+/* 计算动作按钮 */
+.gis-btn { width: 100%; padding: 13px; border: none; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 13.5px; transition: all 0.2s; margin-top: 6px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+.gis-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-primary { background: #2ecc71; color: #050f0a; box-shadow: 0 4px 12px rgba(46,204,113,0.2); }
+.btn-warn { background: #e67e22; color: #ffffff; box-shadow: 0 4px 12px rgba(230,126,34,0.2); }
 .gis-btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
 
-.panel-footer { margin-top: auto; background: rgba(10, 25, 16, 0.8); padding: 16px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.04); }
-.export-header h3 { font-size: 13px; color: #ffffff; margin-bottom: 12px; font-weight: 500; margin-top: 0; }
-.export-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.export-actions button { padding: 10px 0; background: #1b4d2f; border: none; color: #ffffff; font-size: 12.5px; border-radius: 4px; cursor: pointer; }
-.export-actions button:hover { background: #27ae60; }
+/* 内层微卡片隔离 */
+.mic-card { background: rgba(0, 0, 0, 0.25) !important; border: 1px solid rgba(255, 255, 255, 0.07) !important; }
+.panel-footer { margin-top: auto; padding: 14px; border-radius: 8px; }
+.export-header h3 { font-size: 12.5px; color: rgba(255,255,255,0.8); margin-bottom: 10px; font-weight: 600; margin-top: 0; text-shadow: 0 1px 1px rgba(0,0,0,0.5); }
+.export-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.export-actions button { padding: 9px 0; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.1); color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s; }
+.export-actions button:hover { background: rgba(46, 204, 113, 0.15); border-color: rgba(46, 204, 113, 0.3); color: #2ecc71; }
 
 /* ==================== 右侧主展示视窗样式 ==================== */
 .main-display { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-
-/* 地图画板视窗利用 calc 排除掉底部图表高度，精准卡住内容不溢出 */
 .map-viewport { height: calc(100vh - 250px); padding: 20px; position: relative; pointer-events: none; box-sizing: border-box; }
-
-.map-canvas-placeholder { width: 100%; height: 100%; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.02); display: flex; align-items: center; justify-content: center; position: relative; pointer-events: none; }
-.crosshair-center { width: 20px; height: 20px; position: relative; opacity: 0.3; }
+.map-canvas-placeholder { width: 100%; height: 100%; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; position: relative; pointer-events: none; }
+.crosshair-center { width: 20px; height: 20px; position: relative; opacity: 0.25; }
 .crosshair-center::before, .crosshair-center::after { content: ''; position: absolute; background: #2ecc71; }
 .crosshair-center::before { top: 9px; left: 0; width: 20px; height: 1px; }
 .crosshair-center::after { top: 0; left: 9px; width: 1px; height: 20px; }
 
-/* 弱化边界线：去除硬色细线，改用透明边缘和柔和投影 */
-.status-badge { position: absolute; top: 16px; left: 16px; background: rgba(10, 25, 16, 0.75); backdrop-filter: blur(5px); padding: 8px 14px; border-radius: 4px; font-size: 13px; border: 1px solid rgba(255, 255, 255, 0.04); color: #2ecc71; pointer-events: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-.spatial-info { position: absolute; bottom: 16px; left: 16px; font-family: monospace; line-height: 1.6; background: rgba(10, 25, 16, 0.75); backdrop-filter: blur(5px); padding: 10px 14px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.04); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-.coordinate-text { font-size: 12px; color: #a5bccc; margin: 0; }
-.target-text { font-size: 13.5px; color: #2ecc71; font-weight: bold; margin-top: 3px; margin-bottom: 0; }
+/* 悬浮窗体强化 */
+.status-badge { position: absolute; top: 16px; left: 16px; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; pointer-events: auto; }
+.spatial-info { position: absolute; bottom: 16px; left: 16px; font-family: monospace; line-height: 1.5; padding: 10px 14px; border-radius: 8px; }
+.coordinate-text { font-size: 11.5px; color: rgba(255,255,255,0.55); margin: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
+.target-text { font-size: 13px; margin-top: 3px; margin-bottom: 0; }
 
-.gis-loading-overlay { position: absolute; inset: 20px; background: rgba(10, 25, 16, 0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; border-radius: 8px; backdrop-filter: blur(4px); pointer-events: auto; font-size: 14.5px; color: #ffffff; }
-.radar-scan { width: 40px; height: 40px; border: 2px solid rgba(46, 204, 113, 0.2); border-top-color: #2ecc71; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 14px; }
+.gis-loading-overlay { position: absolute; inset: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; border-radius: 8px; pointer-events: auto; }
+.loading-text { font-size: 14px; color: #fff; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+.radar-scan { width: 36px; height: 36px; border: 2px solid rgba(46, 204, 113, 0.15); border-top-color: #2ecc71; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
 
 /* 科学图例弱化边界 */
-.gis-legend { position: absolute; bottom: 26px; right: 36px; background: rgba(10, 25, 16, 0.75); backdrop-filter: blur(5px); padding: 14px 18px; border-radius: 4px; border: 1px solid rgba(255, 255, 255, 0.04); min-width: 250px; box-shadow: 0 6px 20px rgba(0,0,0,0.4); pointer-events: auto; }
-.legend-title { font-size: 12.5px; color: #ffffff; margin-bottom: 10px; font-weight: bold; }
+.gis-legend { position: absolute; bottom: 26px; right: 36px; padding: 14px 18px; border-radius: 8px; min-width: 250px; pointer-events: auto; }
+.legend-title { font-size: 12px; color: #ffffff; margin-bottom: 10px; font-weight: 700; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
 .legend-scale { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
 .legend-scale span { flex: 1; }
-.legend-labels { display: flex; justify-content: space-between; font-size: 11.5px; color: #a5bccc; }
+.legend-labels { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,0.65); font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
 
-/* 底部数智报表：完美限制在视口底端 */
+/* 底部数智报表 */
 .analytics-panel { height: 250px; padding: 0 20px 20px 20px; flex-shrink: 0; pointer-events: auto; box-sizing: border-box; }
-.chart-container { width: 100%; height: 100%; background: rgba(10, 25, 16, 0.75); backdrop-filter: blur(5px); border-radius: 8px; padding: 18px; border: 1px solid rgba(255, 255, 255, 0.04); box-shadow: 0 6px 20px rgba(0,0,0,0.4); box-sizing: border-box; }
+.chart-container { width: 100%; height: 100%; border-radius: 12px; padding: 16px; box-sizing: border-box; }
 .chart-core { width: 100%; height: 100%; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
