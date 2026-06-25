@@ -3,21 +3,20 @@
     <aside class="sidebar-control apple-blur-panel">
       <div class="brand-title">
         <h2 class="text-glow-title">区域遥感数据实时分析系统</h2>
-        <span class="system-code">MODULE // SHFC2601-05</span>
       </div>
 
       <nav class="module-nav">
-        <button 
-          :class="{ active: activeSection === 'index' }" 
+        <button
+          :class="{ active: activeSection === 'index' }"
           @click="changeSection('index')"
         >
-          <span class="nav-id">05-01</span> 遥感指数计算
+          遥感指数计算
         </button>
-        <button 
-          :class="{ active: activeSection === 'compare' }" 
+        <button
+          :class="{ active: activeSection === 'compare' }"
           @click="changeSection('compare')"
         >
-          <span class="nav-id">05-02</span> 空间变化检测
+          空间变化检测
         </button>
       </nav>
 
@@ -25,14 +24,14 @@
         <section v-if="activeSection === 'index'" class="control-group">
           <div class="setting-item">
             <label class="setting-label">目标年份选择</label>
-            <select v-model="calcConfig.year" class="gis-select" @change="syncVisualizations">
+            <select v-model="calcConfig.year" class="gis-select">
               <option v-for="year in yearRange" :key="year" :value="year">{{ year }} 年</option>
             </select>
           </div>
 
           <div class="setting-item">
             <label class="setting-label">分析区域范围</label>
-            <select v-model="calcConfig.region" class="gis-select" @change="syncVisualizations">
+            <select v-model="calcConfig.region" class="gis-select">
               <option value="all">库布齐沙漠全区 (默认)</option>
               <option value="dugui">独贵特拉镇区域</option>
               <option value="jigesitai">吉格斯太镇区域</option>
@@ -67,21 +66,21 @@
         <section v-if="activeSection === 'compare'" class="control-group">
           <div class="setting-item">
             <label class="setting-label">起始年份 (Time 1)</label>
-            <select v-model="compareConfig.startYear" class="gis-select" @change="syncVisualizations">
+            <select v-model="compareConfig.startYear" class="gis-select">
               <option v-for="year in yearRange" :key="year" :value="year">{{ year }} 年</option>
             </select>
           </div>
 
           <div class="setting-item">
             <label class="setting-label">结束年份 (Time 2)</label>
-            <select v-model="compareConfig.endYear" class="gis-select" @change="syncVisualizations">
+            <select v-model="compareConfig.endYear" class="gis-select">
               <option v-for="year in yearRange" :key="year" :value="year">{{ year }} 年</option>
             </select>
           </div>
 
           <div class="setting-item">
             <label class="setting-label">差分检测基准指标</label>
-            <select v-model="compareConfig.indicator" class="gis-select" @change="syncVisualizations">
+            <select v-model="compareConfig.indicator" class="gis-select">
               <option v-for="(label, key) in indicatorMap" :key="key" :value="key">{{ key }} - {{ label }}</option>
             </select>
           </div>
@@ -94,7 +93,7 @@
 
       <div class="panel-footer mic-card">
         <div class="export-header">
-          <h3>分析结果导出 (05-03)</h3>
+          <h3>分析结果导出</h3>
         </div>
         <div class="export-actions">
           <button @click="executeExport('TIFF')">GeoTIFF</button>
@@ -135,18 +134,12 @@
         </div>
       </section>
 
-      <section class="analytics-panel">
-        <div class="chart-container apple-blur-panel">
-          <div ref="chartDom" class="chart-core"></div>
-        </div>
-      </section>
     </main>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick, computed } from "vue"
-import * as echarts from "echarts"
+import { ref, reactive, computed } from "vue"
 
 const yearRange = Array.from({ length: 2024 - 1985 + 1 }, (_, i) => 1985 + i)
 const indicatorMap = {
@@ -156,10 +149,8 @@ const indicatorMap = {
   RSEI: "遥感生态指数 (Remote Ecological Index)"
 }
 
-const activeSection = ref("index") 
+const activeSection = ref("index")
 const isComputing = ref(false)
-const chartDom = ref(null)
-let chartInstance = null
 
 const calcConfig = reactive({
   year: 2024,
@@ -191,24 +182,16 @@ const activeLegend = computed(() => {
 
 const changeSection = (section) => {
   activeSection.value = section
-  nextTick(() => {
-    if (chartInstance) {
-      chartInstance.resize()
-    }
-    syncVisualizations()
-  })
 }
 
 const setIndicator = (ind) => {
   calcConfig.indicator = ind
-  syncVisualizations()
 }
 
 const triggerGEE = () => {
   isComputing.value = true
   setTimeout(() => {
     isComputing.value = false
-    syncVisualizations()
   }, 800)
 }
 
@@ -220,86 +203,12 @@ const triggerCompare = () => {
   isComputing.value = true
   setTimeout(() => {
     isComputing.value = false
-    syncVisualizations()
   }, 800)
 }
 
 const executeExport = (format) => {
-  alert(`[SHFC2601-05-03] 正在对当前视窗内数据进行几何裁剪与坐标系打包，导出目标格式：[${format}]。`)
+  alert(`正在对当前视窗内数据进行几何裁剪与坐标系打包，导出目标格式：[${format}]。`)
 }
-
-const syncVisualizations = () => {
-  if (!chartInstance) return
-
-  if (activeSection.value === 'index') {
-    const indexMockData = {
-      FVC: [0.12, 0.18, 0.29, 0.43, 0.54],
-      NDWI: [0.05, 0.07, 0.11, 0.14, 0.12],
-      BSI: [0.72, 0.61, 0.48, 0.35, 0.24],
-      RSEI: [0.22, 0.31, 0.45, 0.58, 0.69]
-    }
-    const currentData = indexMockData[calcConfig.indicator] || [0.1, 0.2, 0.3, 0.4, 0.5]
-
-    chartInstance.setOption({
-      backgroundColor: 'transparent',
-      title: { 
-        text: `库布其沙漠 ${calcConfig.indicator} 宏观历史恢复演变趋势`, 
-        textStyle: { color: '#ffffff', fontSize: 14, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.7)', textShadowBlur: 4 } 
-      },
-      tooltip: { trigger: 'axis', backgroundColor: 'rgba(6, 18, 12, 0.95)', borderColor: '#2ecc71', textStyle: { color: '#fff', fontSize: 13 } },
-      grid: { left: '55', right: '25', top: '45', bottom: '35' },
-      xAxis: { type: 'category', data: ['1985', '1995', '2005', '2015', '2024'], axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }, axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 500 } },
-      yAxis: { type: 'value', min: 0, max: 1, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } }, axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 500 } },
-      series: [{
-        name: calcConfig.indicator,
-        type: 'line',
-        smooth: true,
-        color: '#2ecc71',
-        lineStyle: { width: 2.5 },
-        areaStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-            { offset: 0, color: 'rgba(46, 204, 113, 0.25)' },
-            { offset: 1, color: 'rgba(46, 204, 113, 0)' }
-          ])
-        },
-        data: currentData
-      }]
-    }, true)
-  } else {
-    chartInstance.setOption({
-      backgroundColor: 'transparent',
-      title: { 
-        text: `时段 (${compareConfig.startYear}-${compareConfig.endYear}) 像元级生态等级转移斑块占比`, 
-        textStyle: { color: '#ffffff', fontSize: 14, fontWeight: '700', textShadowColor: 'rgba(0,0,0,0.7)', textShadowBlur: 4 } 
-      },
-      tooltip: { trigger: 'item', backgroundColor: 'rgba(6, 18, 12, 0.95)', borderColor: '#2ecc71', formatter: '{b} : {c}%', textStyle: { color: '#fff', fontSize: 13 } },
-      grid: { left: '55', right: '25', top: '45', bottom: '35' },
-      xAxis: { type: 'category', data: ['显著退化', '轻微退化', '基本不变', '轻微改善', '显著改善'], axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }, axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 500 } },
-      yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.04)' } }, axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 11, fontWeight: 500 } },
-      series: [{
-        type: 'bar',
-        barWidth: '35%',
-        data: [
-          { value: 4.2, itemStyle: { color: '#e74c3c' } },
-          { value: 9.8, itemStyle: { color: '#e67e22' } },
-          { value: 32.1, itemStyle: { color: '#f1c40f' } },
-          { value: 38.4, itemStyle: { color: '#2ecc71' } },
-          { value: 15.5, itemStyle: { color: '#27ae60' } }
-        ]
-      }]
-    }, true)
-  }
-}
-
-onMounted(() => {
-  nextTick(() => {
-    if (chartDom.value) {
-      chartInstance = echarts.init(chartDom.value)
-      syncVisualizations()
-    }
-  })
-  window.addEventListener('resize', () => chartInstance && chartInstance.resize())
-})
 </script>
 
 <style scoped>
@@ -353,13 +262,11 @@ onMounted(() => {
   box-sizing: border-box;
 }
 
-.system-code { font-size: 10.5px; color: #2ecc71; font-family: monospace; background: rgba(46, 204, 113, 0.15); padding: 3px 8px; border-radius: 4px; display: inline-block; margin-top: 6px; font-weight: bold; border: 1px solid rgba(46, 204, 113, 0.2); }
 
 /* 模块导航弹性盒 */
 .module-nav { display: flex; gap: 8px; margin-top: 22px; background: rgba(0, 0, 0, 0.2); padding: 4px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); }
 .module-nav button { flex: 1; padding: 10px 0; background: transparent; border: 1px solid transparent; color: rgba(255,255,255,0.55); font-size: 13.5px; cursor: pointer; border-radius: 6px; transition: all 0.2s; font-weight: 600; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
 .module-nav button:hover { color: #ffffff; background: rgba(255,255,255,0.05); }
-.module-nav button .nav-id { font-family: monospace; font-size: 11px; opacity: 0.6; margin-right: 2px; }
 .module-nav button.active { background: rgba(46, 204, 113, 0.18); color: #2ecc71; font-weight: 700; border: 1px solid rgba(46, 204, 113, 0.3); text-shadow: none; }
 
 .panel-body { flex: 1; overflow-y: auto; padding-right: 2px; margin-top: 15px; }
@@ -402,7 +309,7 @@ onMounted(() => {
 
 /* ==================== 右侧主展示视窗样式 ==================== */
 .main-display { flex: 1; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-.map-viewport { height: calc(100vh - 250px); padding: 20px; position: relative; pointer-events: none; box-sizing: border-box; }
+.map-viewport { flex: 1; padding: 20px; position: relative; pointer-events: none; box-sizing: border-box; }
 .map-canvas-placeholder { width: 100%; height: 100%; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); display: flex; align-items: center; justify-content: center; position: relative; pointer-events: none; }
 .crosshair-center { width: 20px; height: 20px; position: relative; opacity: 0.25; }
 .crosshair-center::before, .crosshair-center::after { content: ''; position: absolute; background: #2ecc71; }
@@ -425,11 +332,6 @@ onMounted(() => {
 .legend-scale { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
 .legend-scale span { flex: 1; }
 .legend-labels { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,0.65); font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
-
-/* 底部数智报表 */
-.analytics-panel { height: 250px; padding: 0 20px 20px 20px; flex-shrink: 0; pointer-events: auto; box-sizing: border-box; }
-.chart-container { width: 100%; height: 100%; border-radius: 12px; padding: 16px; box-sizing: border-box; }
-.chart-core { width: 100%; height: 100%; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 </style>

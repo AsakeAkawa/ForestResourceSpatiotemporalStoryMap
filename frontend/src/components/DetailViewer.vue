@@ -62,7 +62,6 @@
       </div>
 
       <div class="giant-headline-row-right">
-        <span class="active-project-code">{{ projectData?.projectCode }}</span>
         <h2 class="narrative-giant-title">{{ projectData?.baseInfo?.fullName }}</h2>
       </div>
     </div>
