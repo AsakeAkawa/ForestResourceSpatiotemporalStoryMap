@@ -5,7 +5,7 @@
     <div class="art-content-container">
       <header class="hero-header">
         <div class="brand-badge">
-          <span class="pulse-dot"></span> 时空叙事 · 1980 - 2026
+          <span class="pulse-dot"></span> 时空叙事 · 1985 - 2024
         </div>
         <h1 class="main-project-title">山河复翠</h1>
         <div class="sub-title-wrapper">
@@ -18,21 +18,21 @@
         <section class="narrative-paragraph">
           <span class="section-tag">项目背景</span>
           <p>
-            自20世纪1980年代以来，中国实施了一系列举世瞩目的重大生态修复工程（如三北防护林、退耕还林还草、京津风沙源治理等）。本平台通过长时序遥感与GIS空间分析技术，客观见证四十载山河变绿的壮丽史诗。
+            自20世纪1980年代以来，中国实施了一系列举世瞩目的重大生态修复工程，如三北防护林、退耕还林还草、京津风沙源治理等。本平台通过长时序遥感与GIS空间分析技术，客观见证四十载山河变绿的壮丽史诗。
           </p>
         </section>
 
         <section class="narrative-paragraph">
           <span class="section-tag">内容概述</span>
           <p>
-            平台集成三大核心功能：<strong>全国生态时空演变</strong>（NDVI长时序分析）、<strong>重大生态工程展示</strong>（点位地理距离空间感应）以及<strong>区域遥感实时分析</strong>，支持全方位数据可视化与交互探索。
+            平台集成三大核心功能：<strong>全国生态时空演变</strong>、<strong>重大生态工程展示</strong>以及<strong>区域遥感实时分析</strong>，支持全方位数据可视化与交互探索。
           </p>
         </section>
       </main>
 
       <footer class="meta-footer">
-        <div class="team-meta">制作团队：xxx团队</div>
-        <div class="source-meta">数据来源：国家林业和草原局 / GEE 遥感时序数据</div>
+        <div class="team-meta">制作团队：第二组</div>
+        <div class="source-meta">数据来源：CATCD / GEE 遥感时序数据</div>
       </footer>
     </div>
 

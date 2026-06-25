@@ -89,6 +89,8 @@
             </div>
           </transition>
 
+          <p v-if="!showFinalTrigger" class="skip-hint">按 空格 跳过</p>
+
         </div>
       </div>
     </transition>
@@ -96,7 +98,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -127,6 +129,11 @@ const displayedLines = ref(['', '', '', ''])
 // 第二页文案（金句）
 const quoteTextSource = "「为山川大地增添锦绣，让中国式现代化底色更加亮丽。」"
 const displayedQuoteText = ref('')
+
+const skipRequested = ref(false)
+let activeTypeInterval = null
+let activeDelayTimeout = null
+let resolveDelay = null
 
 function revealForm() {
   showForm.value = true
@@ -168,55 +175,97 @@ function handleLoginClick() {
 
 // 控制全局大纪事时间轴
 async function startNarrativeTimeline() {
+  skipRequested.value = false
+
   // === 【第一页】 逐字打印四行字 ===
   currentStage.value = 1
   for (let i = 0; i < pageOneLines.length; i++) {
+    if (skipRequested.value) break
     currentLineIndex.value = i
     await typeLine(i, pageOneLines[i])
-    await delay(700) 
+    if (!skipRequested.value) await delay(700)
   }
-  await delay(1200) // 读完重磅成效后多停留片刻
+
+  if (skipRequested.value) {
+    await skipToEnd()
+    return
+  }
+
+  await delay(1200)
+  if (skipRequested.value) { await skipToEnd(); return }
 
   // === 【过渡】 切到第二页 ===
-  currentStage.value = 0 
+  currentStage.value = 0
   await delay(800)
   currentStage.value = 2
-  
+
   // === 【第二页】 打印金句 ===
   await typeQuote(quoteTextSource)
-  await delay(400)
-  showAuthor.value = true 
-  await delay(2500) 
+  if (!skipRequested.value) {
+    await delay(400)
+    showAuthor.value = true
+    await delay(2500)
+  } else {
+    await skipToEnd()
+    return
+  }
 
   // === 【第三页】 展现纯文字进入平台按钮 ===
+  showFinalTrigger.value = true
+}
+
+async function skipToEnd() {
+  // 清除所有正在进行的打字/延时定时器
+  if (activeTypeInterval) { clearInterval(activeTypeInterval); activeTypeInterval = null }
+  if (activeDelayTimeout) { clearTimeout(activeDelayTimeout); activeDelayTimeout = null }
+
+  // 立即显示所有第一页文案全文
+  if (currentStage.value === 1) {
+    for (let i = 0; i < pageOneLines.length; i++) {
+      displayedLines.value[i] = pageOneLines[i]
+    }
+  }
+
+  // 立即显示第二页金句全文
+  displayedQuoteText.value = quoteTextSource
+  showAuthor.value = true
+
+  // 直接进入第三页
+  currentStage.value = 2
+  await delay(600)
   showFinalTrigger.value = true
 }
 
 function typeLine(lineIdx, fullText) {
   return new Promise((resolve) => {
     let charIdx = 0
-    const timer = setInterval(() => {
+    activeTypeInterval = setInterval(() => {
       charIdx++
       displayedLines.value[lineIdx] = fullText.substring(0, charIdx)
-      if (charIdx >= fullText.length) {
-        clearInterval(timer)
+      if (charIdx >= fullText.length || skipRequested.value) {
+        clearInterval(activeTypeInterval)
+        activeTypeInterval = null
+        // 跳过时直接显示全文
+        if (skipRequested.value) displayedLines.value[lineIdx] = fullText
         resolve()
       }
-    }, 85) 
+    }, 85)
   })
 }
 
 function typeQuote(fullText) {
   return new Promise((resolve) => {
     let charIdx = 0
-    const timer = setInterval(() => {
+    activeTypeInterval = setInterval(() => {
       charIdx++
       displayedQuoteText.value = fullText.substring(0, charIdx)
-      if (charIdx >= fullText.length) {
-        clearInterval(timer)
+      if (charIdx >= fullText.length || skipRequested.value) {
+        clearInterval(activeTypeInterval)
+        activeTypeInterval = null
+        if (skipRequested.value) displayedQuoteText.value = fullText
         resolve()
       }
-    }, 95) 
+    }, 95)
   })
 }
 
@@ -224,8 +273,39 @@ function enterPlatformMain() {
   router.push('/')
 }
 
+function handleKeyDown(e) {
+  if (e.code === 'Space' && showTransitionStage.value && !showFinalTrigger.value) {
+    e.preventDefault()
+    skipRequested.value = true
+    // 立即中断当前正在等待的 delay
+    if (resolveDelay) {
+      resolveDelay()
+      resolveDelay = null
+    }
+    if (activeDelayTimeout) {
+      clearTimeout(activeDelayTimeout)
+      activeDelayTimeout = null
+    }
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown)
+})
+
 function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+  return new Promise(resolve => {
+    resolveDelay = resolve
+    activeDelayTimeout = setTimeout(() => {
+      activeDelayTimeout = null
+      resolveDelay = null
+      resolve()
+    }, ms)
+  })
 }
 </script>
 
@@ -602,4 +682,23 @@ function delay(ms) {
 
 .fade-slow-enter-active { transition: opacity 1.5s ease-in; }
 .fade-slow-enter-from { opacity: 0; }
+
+/* ==================== 跳过提示 ==================== */
+.skip-hint {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 13px;
+  letter-spacing: 2px;
+  color: rgba(255, 255, 255, 0.25);
+  margin: 0;
+  pointer-events: none;
+  animation: hintPulse 3s ease-in-out infinite;
+}
+
+@keyframes hintPulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.55; }
+}
 </style>
