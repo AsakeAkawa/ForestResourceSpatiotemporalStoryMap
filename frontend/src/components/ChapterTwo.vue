@@ -67,32 +67,33 @@ import { fromLonLat } from 'ol/proj'
 import { Style, Circle, Fill, Stroke } from 'ol/style'
 import Overlay from 'ol/Overlay'
 
+import ecoDatabase from '../assets/data/ecoprojects.json'
+
 const router = useRouter()
 const emit = defineEmits(['toggle-immersive'])
 const options = { maxOpacityOnActive: 0.5, maxDistance: 120000, activeOn: 30000 }
 
-const pointsData = ref([
-  {
-    id: 'saihanba',
-    name: '塞罕坝机械林场',
-    detailTitle: '塞罕坝 · 筑起绿色长城的防线',
-    year: '2002',
-    detailText: '三代人，大半个世纪。他们在高原荒漠上顶风冒雪，硬是用青春和汗水将漫天黄沙改写成了广袤无垠的万顷林海。',
-    img: 'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1600&q=80',
-    geoCoord: [117.2, 42.4],
+// 🗺️ 从 ecoprojects.json 加载4个重大生态工程点位数据
+// 背景图按工程类型匹配：防护林→林海 / 天然林→密林 / 退耕→梯田青山 / 退牧→草原
+const projectImages = {
+  sanbei: 'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1600&q=80',  // 三北防护林：森林远景
+  tianranlin: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1600&q=80',  // 天然林：茂密林冠
+  tuigenghuanlin: 'https://images.pexels.com/photos/37860109/pexels-photo-37860109.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=1600&q=80',  // 退耕还林：青山梯田
+  tumuhauncao: 'https://images.pexels.com/photos/28700656/pexels-photo-28700656.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=1600&q=80'  // 退牧还草：广阔草原
+}
+const pointsData = ref(
+  ecoDatabase.projects.map((p) => ({
+    id: p.id,
+    name: p.name,
+    detailTitle: `${p.name} · ${p.tags[0]}`,
+    year: String(p.startYear),
+    detailText: p.baseInfo.bgText,
+    img: projectImages[p.id] || 'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1600&q=80',
+    geoCoord: p.geoCoord,
+    color: p.wmsColor || '#2ecc71',
     currentOpacity: 0
-  },
-  {
-    id: 'youyu',
-    name: '右玉县防护林',
-    detailTitle: '山西右玉 · 塞上不毛之地的蜕变',
-    year: '2006',
-    detailText: '在风沙肆虐的黄土高原死角，全县人民持之以恒数十载。迎风栽树，背风造林，终将贫瘠不毛之地拓荒成璀璨的生态绿洲。',
-    img: 'https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=1600&q=80',
-    geoCoord: [112.4, 40.0],
-    currentOpacity: 0
-  }
-])
+  }))
+)
 
 const activePointId = ref(null)
 const tooltipElement = ref(null)
@@ -145,7 +146,7 @@ function setupLayerAndListeners() {
     feat.setStyle(new Style({
       image: new Circle({
         radius: 10,
-        fill: new Fill({ color: '#2ecc71' }),
+        fill: new Fill({ color: pt.color || '#2ecc71' }),
         stroke: new Stroke({ color: '#ffffff', width: 2 })
       })
     }))

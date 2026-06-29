@@ -64,6 +64,7 @@ import XYZ from 'ol/source/XYZ'
 import ImageLayer from 'ol/layer/Image'
 import ImageWMS from 'ol/source/ImageWMS'
 import VectorSource from 'ol/source/Vector'
+import GeoJSON from 'ol/format/GeoJSON'
 import { fromLonLat, transform } from 'ol/proj'
 import Feature from 'ol/Feature'
 import LineString from 'ol/geom/LineString'
@@ -105,6 +106,7 @@ let map = null
 let view = null
 const layersPool = {}
 let forestWmsLayer = null // 🌟 全局森林 WMS 图层变量，现在是一个 ImageLayer 实例
+const boundaryLayers = {} // 🗺️ 存储4个重大生态工程边界 TileWMS 图层，key=projectId
 
 const currentSourceId = ref('gaode-sat')
 const mapSources = [
@@ -164,20 +166,90 @@ onMounted(() => {
     zIndex: 999,    // 将层级拉高，防止被底图压盖
     source: new ImageWMS({
       url: 'http://172.26.63.161:8080/geoserver/eco_story_map/wms',
-      // 🌟 核心：写在这里！强制 OpenLayers 在前端做重投影转换
-      projection: 'EPSG:4326', 
+      projection: 'EPSG:4326',
       params: {
         'SERVICE': 'WMS',
-        'VERSION': '1.1.0', 
+        'VERSION': '1.1.0',
         'REQUEST': 'GetMap',
-        'LAYERS': 'eco_story_map:catcd_1985_forest_cover', 
+        'LAYERS': 'eco_story_map:catcd_1985_forest_cover',
         'FORMAT': 'image/png',
         'TRANSPARENT': 'true'
       },
-      ratio: 1, 
+      ratio: 1,
       serverType: 'geoserver'
     })
   })
+
+  // 🗺️ 创建4个重大生态工程边界矢量图层（从 public/data/ 异步加载 GeoJSON）
+  // 每种工程使用不同的填充图案区分：斜线 / 十字网 / 横线 / 点阵
+  function createPatternFill(color, patternType) {
+    const size = 16
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+    const ctx = canvas.getContext('2d')
+    ctx.strokeStyle = color
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    switch (patternType) {
+      case 'diagonal':  // 斜线 ///
+        ctx.moveTo(0, 0); ctx.lineTo(size, size)
+        ctx.moveTo(-size/2, 0); ctx.lineTo(size/2, size)
+        ctx.moveTo(size/2, 0); ctx.lineTo(size*1.5, size)
+        break
+      case 'crosshatch':  // 十字网格 #
+        ctx.moveTo(0, 0); ctx.lineTo(size, size)
+        ctx.moveTo(size, 0); ctx.lineTo(0, size)
+        break
+      case 'horizontal':  // 横线 ---
+        ctx.moveTo(0, size/2); ctx.lineTo(size, size/2)
+        break
+      case 'dots':  // 点阵 ...
+        ctx.fillStyle = color
+        ctx.fillRect(size/2 - 1, size/2 - 1, 2, 2)
+        break
+    }
+    ctx.stroke()
+    return ctx.createPattern(canvas, 'repeat')
+  }
+
+  const projectLayerConfigs = [
+    { id: 'sanbei', file: '/data/sanbei.geojson', color: '#e41a1c', pattern: 'diagonal' },
+    { id: 'tianranlin', file: '/data/tianranlin.geojson', color: '#377eb8', pattern: 'crosshatch' },
+    { id: 'tuigenghuanlin', file: '/data/tuigenghuanlin.geojson', color: '#4daf4a', pattern: 'horizontal' },
+    { id: 'tumuhauncao', file: '/data/tumuhauncao.geojson', color: '#984ea3', pattern: 'dots' },
+  ]
+  const geoJsonFormat = new GeoJSON()
+  // 先创建空矢量图层（初始隐藏），异步加载 GeoJSON 后填充数据
+  projectLayerConfigs.forEach(cfg => {
+    const vectorSource = new VectorSource()
+    const vectorLayer = new VectorLayer({
+      visible: false,
+      zIndex: 998,
+      source: vectorSource,
+      style: new Style({
+        stroke: new Stroke({ color: cfg.color, width: 2 }),
+        fill: new Fill({ color: createPatternFill(cfg.color, cfg.pattern) })
+      })
+    })
+    boundaryLayers[cfg.id] = vectorLayer
+  })
+  window.boundaryLayers = boundaryLayers
+
+  // 异步加载 GeoJSON 数据填充到矢量图层
+  Promise.all(projectLayerConfigs.map(async cfg => {
+    try {
+      const resp = await fetch(cfg.file)
+      const geojson = await resp.json()
+      const features = geoJsonFormat.readFeatures(geojson, {
+        dataProjection: 'EPSG:4326',
+        featureProjection: 'EPSG:3857'
+      })
+      boundaryLayers[cfg.id].getSource().addFeatures(features)
+    } catch (e) {
+      console.error('Failed to load boundary GeoJSON:', cfg.file, e)
+    }
+  }))
 
   map = new Map({
     target: 'ol-map-container',
@@ -186,10 +258,11 @@ onMounted(() => {
       layersPool['gaode-vec'],
       layersPool['osm'],
       layersPool['arcgis-dem'],
-      forestWmsLayer // 🌟 将全新的森林单张动态 WMS 图层载入地图
+      forestWmsLayer, // 🌟 将全新的森林单张动态 WMS 图层载入地图
+      ...Object.values(boundaryLayers) // 🗺️ 将边界图层也加入初始 layers 数组
     ],
     view: view,
-    controls: [] 
+    controls: []
   })
 
   const scaleControl = new ScaleLine({
@@ -234,10 +307,12 @@ function switchPage(index) {
   currentIndex.value = index
   isImmersiveMode.value = false
   
-  // 🌟 核心控制：只有在“全国生态时空演变”（篇章索引为 1）时，才激活 WMS 栅格覆盖层
+  // 🌟 核心控制：只有在”全国生态时空演变”（篇章索引为 1）时，才激活 WMS 栅格覆盖层
   if (forestWmsLayer) {
     forestWmsLayer.setVisible(index === 1)
   }
+  // 🗺️ 工程边界层：第二篇章”重大生态工程”（索引为 2）时全部显示
+  Object.values(boundaryLayers).forEach(l => l.setVisible(index === 2))
 
   if (!view) return
   
