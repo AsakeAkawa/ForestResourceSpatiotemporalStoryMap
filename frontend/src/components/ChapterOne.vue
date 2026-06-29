@@ -97,12 +97,48 @@ const timelineNodes = [
 ]
 
 const historicalData = {
-  1985: { coverage: 12.0, volume: 90.3, volumeGrow: 1.2, structure: [120, 80, 45], pie: [{ name: '东北区', value: 35 }, { name: '华南区', value: 20 }, { name: '西南区', value: 18 }, { name: '其他', value: 27 }] },
-  1995: { coverage: 13.9, volume: 112.7, volumeGrow: 2.3, structure: [180, 110, 65], pie: [{ name: '东北区', value: 32 }, { name: '华南区', value: 23 }, { name: '西南区', value: 20 }, { name: '其他', value: 25 }] },
-  2000: { coverage: 16.6, volume: 124.9, volumeGrow: 3.1, structure: [290, 210, 110], pie: [{ name: '东北区', value: 30 }, { name: '华南区', value: 24 }, { name: '西南区', value: 22 }, { name: '其他', value: 24 }] },
-  2010: { coverage: 20.4, volume: 151.3, volumeGrow: 4.2, structure: [380, 290, 170], pie: [{ name: '东北区', value: 27 }, { name: '华南区', value: 26 }, { name: '西南区', value: 24 }, { name: '其他', value: 23 }] },
-  2014: { coverage: 21.5, volume: 162.8, volumeGrow: 4.6, structure: [405, 315, 205], pie: [{ name: '东北区', value: 26 }, { name: '华南区', value: 26 }, { name: '西南区', value: 25 }, { name: '其他', value: 23 }] },
-  2024: { coverage: 24.8, volume: 194.2, volumeGrow: 6.0, structure: [490, 390, 280], pie: [{ name: '东北区', value: 24 }, { name: '华南区', value: 26 }, { name: '西南区', value: 27 }, { name: '其他', value: 23 }] }
+  1985: {
+    coverage: 12.54, volume: 90.3, volumeGrow: 1.22, structure: [110, 75, 45],
+    pie: [
+      { name: '东北', value: 16.37 }, { name: '华北', value: 12.17 }, { name: '华东', value: 14.79 },
+      { name: '华中', value: 9.51 }, { name: '华南', value: 10.70 }, { name: '西南', value: 26.94 }, { name: '西北', value: 9.53 }
+    ]
+  },
+  1995: {
+    coverage: 13.82, volume: 112.7, volumeGrow: 2.24, structure: [170, 105, 60],
+    pie: [
+      { name: '东北', value: 16.71 }, { name: '华北', value: 11.10 }, { name: '华东', value: 15.36 },
+      { name: '华中', value: 10.16 }, { name: '华南', value: 11.31 }, { name: '西南', value: 26.93 }, { name: '西北', value: 8.43 }
+    ]
+  },
+  2000: {
+    coverage: 16.41, volume: 124.9, volumeGrow: 2.44, structure: [270, 200, 105],
+    pie: [
+      { name: '东北', value: 15.02 }, { name: '华北', value: 9.89 }, { name: '华东', value: 15.90 },
+      { name: '华中', value: 10.73 }, { name: '华南', value: 11.40 }, { name: '西南', value: 28.98 }, { name: '西北', value: 8.09 }
+    ]
+  },
+  2010: {
+    coverage: 18.40, volume: 151.9, volumeGrow: 2.64, structure: [360, 275, 160],
+    pie: [
+      { name: '东北', value: 14.74 }, { name: '华北', value: 10.33 }, { name: '华东', value: 15.36 },
+      { name: '华中', value: 10.95 }, { name: '华南', value: 11.07 }, { name: '西南', value: 29.14 }, { name: '西北', value: 8.42 }
+    ]
+  },
+  2014: {
+    coverage: 20.36, volume: 162.8, volumeGrow: 2.88, structure: [385, 300, 195],
+    pie: [
+      { name: '东北', value: 14.26 }, { name: '华北', value: 10.51 }, { name: '华东', value: 14.98 },
+      { name: '华中', value: 10.81 }, { name: '华南', value: 11.43 }, { name: '西南', value: 29.47 }, { name: '西北', value: 8.54 }
+    ]
+  },
+  2024: {
+    coverage: 23.92, volume: 195.2, volumeGrow: 3.24, structure: [465, 370, 265],
+    pie: [
+      { name: '东北', value: 13.39 }, { name: '华北', value: 10.96 }, { name: '华东', value: 14.24 },
+      { name: '华中', value: 10.66 }, { name: '华南', value: 11.64 }, { name: '西南', value: 29.74 }, { name: '西北', value: 9.37 }
+    ]
+  }
 }
 
 const currentYear = ref(1985)
@@ -153,7 +189,7 @@ function updateDynamicCharts() {
       tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,25,16,0.95)', borderColor: '#2ecc71' },
       grid: { left: '15%', right: '5%', top: '15%', bottom: '15%' },
       xAxis: { type: 'category', data: years, axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } } },
-      yAxis: { type: 'value', min: 10, max: 25, axisLabel: { formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.03)' } } },
+      yAxis: { type: 'value', min: 10, max: 26, axisLabel: { formatter: '{value}%' }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.03)' } } },
       series: [{
         data: years.map(y => historicalData[y].coverage),
         type: 'line', smooth: true, color: '#2ecc71', lineStyle: { width: 2.5 },
@@ -190,7 +226,7 @@ function updateDynamicCharts() {
         type: 'pie', radius: ['35%', '60%'], avoidLabelOverlap: false,
         itemStyle: { borderRadius: 3 },
         label: { show: true, color: 'rgba(255,255,255,0.6)', fontSize: 10 },
-        color: ['#2ecc71', '#27ae60', '#1abc9c', '#16a085', '#34495e'],
+        color: ['#2ecc71', '#3498db', '#f39c12', '#e74c3c', '#9b59b6', '#1abc9c', '#e67e22'],
         data: currentNarrative.value.pie
       }]
     })

@@ -16,6 +16,8 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^6.0.6",
+    "proj4": "^2.20.9",
+    "shapefile": "^0.6.6",
     "vite": "^8.0.8",
     "vite-plugin-vue-devtools": "^8.1.1"
   },

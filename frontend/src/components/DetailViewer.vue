@@ -1,6 +1,6 @@
 <template>
   <div class="chapter-detail-container">
-    
+
     <header class="detail-minimal-header">
       <div class="back-action-btn" @click="goBack">
         <span class="back-arrow">‹</span> 返回上一页
@@ -43,13 +43,13 @@
     </div>
 
     <div class="right-bottom-text-narrative-zone">
-      
+
       <div class="floating-brief-vertical-stack">
         <section class="minimal-brief-section">
           <h4 class="brief-title-tag">工程立项背景</h4>
           <p class="brief-paragraph-text">{{ projectData?.baseInfo?.bgText }}</p>
         </section>
-        
+
         <section class="minimal-brief-section">
           <h4 class="brief-title-tag">核心治理举措</h4>
           <p class="brief-paragraph-text">{{ projectData?.indicators?.measures }}</p>
@@ -67,7 +67,7 @@
     </div>
 
     <div class="map-top-right-vacuum-zone">
-      <div class="vacuum-gis-tip">[ 实时联动：OpenLayers 动态矢量边界已加载 ]</div>
+      <div class="vacuum-gis-tip">[ 实时联动：OpenLayers WMS 工程边界已加载 ]</div>
     </div>
 
   </div>
@@ -76,51 +76,36 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import ecoDatabase from '../assets/data/ecoprojects.json' 
+import ecoDatabase from '../assets/data/ecoprojects.json'
 
 const route = useRoute()
 const router = useRouter()
 
-const targetId = ref(route.params.id || 'saihanba')
+const targetId = ref(route.params.id || 'sanbei')
 const projectData = computed(() => ecoDatabase.projects.find(p => p.id === targetId.value))
-
-let demoVectorLayer = null
-
-const projectGeoMockData = {
-  saihanba: { center: [117.25, 42.40], coords: [[116.9, 42.1], [117.6, 42.2], [117.7, 42.6], [117.1, 42.6], [116.9, 42.1]] },
-  youyu: { center: [112.45, 40.00], coords: [[112.1, 39.7], [112.7, 39.8], [112.8, 40.3], [112.2, 40.2], [112.1, 39.7]] }
-}
 
 onMounted(() => {
   const appNavBar = document.querySelector('.top-minimal-nav-bar')
   if (appNavBar) appNavBar.style.display = 'none'
 
   const map = window.olMap
-  const olData = window.ol
-  if (map && olData) {
-    const geoInfo = projectGeoMockData[targetId.value] || projectGeoMockData['saihanba']
-    const compensatedCenter = [geoInfo.center[0] - 4.5, geoInfo.center[1] - 0.8]
-    
-    map.getView().animate({
-      center: olData.proj.fromLonLat(compensatedCenter),
-      zoom: 6,
-      duration: 1200
+  const boundaryLayers = window.boundaryLayers
+  if (map && boundaryLayers) {
+    // 🗺️ 只显示当前项目对应的 WMS 边界图层，隐藏其余3个
+    Object.entries(boundaryLayers).forEach(([id, layer]) => {
+      layer.setVisible(id === targetId.value)
     })
 
-    const polygonCoords = geoInfo.coords.map(pt => olData.proj.fromLonLat(pt))
-    const feature = new olData.Feature({
-      geometry: new olData.geom.LineString(polygonCoords)
-    })
-
-    feature.setStyle(new olData.style.Style({
-      stroke: new olData.style.Stroke({ color: '#618764', width: 3, lineDash: [6, 4] }),
-      fill: new olData.style.Fill({ color: 'rgba(156, 176, 128, 0.05)' })
-    }))
-
-    const vectorSource = new olData.source.Vector({ features: [feature] })
-    demoVectorLayer = new olData.layer.Vector({ source: vectorSource, zIndex: 10 })
-    
-    map.addLayer(demoVectorLayer)
+    // 地图视角移动到项目中心
+    const project = projectData.value
+    if (project && project.geoCoord && window.ol) {
+      const compensatedCenter = [project.geoCoord[0] - 4.5, project.geoCoord[1] - 0.8]
+      map.getView().animate({
+        center: window.ol.proj.fromLonLat(compensatedCenter),
+        zoom: 6,
+        duration: 1200
+      })
+    }
   }
 })
 
@@ -128,9 +113,10 @@ onUnmounted(() => {
   const appNavBar = document.querySelector('.top-minimal-nav-bar')
   if (appNavBar) appNavBar.style.display = 'flex'
 
-  const map = window.olMap
-  if (map && demoVectorLayer) {
-    map.removeLayer(demoVectorLayer)
+  // 🗺️ 恢复所有4个边界图层为可见（返回 ChapterTwo 时全部显示）
+  const boundaryLayers = window.boundaryLayers
+  if (boundaryLayers) {
+    Object.values(boundaryLayers).forEach(l => l.setVisible(true))
   }
 })
 
@@ -145,7 +131,7 @@ function goBack() {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
   z-index: 9;
-  pointer-events: none; 
+  pointer-events: none;
   user-select: none;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -155,10 +141,10 @@ function goBack() {
   content: "";
   position: absolute;
   top: 0; left: 0; width: 100%; height: 100%;
-  background: linear-gradient(to right, 
-    rgba(39, 51, 56, 0.98) 0%, 
-    rgba(39, 51, 56, 0.92) 25%, 
-    rgba(43, 87, 72, 0.25) 45%, 
+  background: linear-gradient(to right,
+    rgba(39, 51, 56, 0.98) 0%,
+    rgba(39, 51, 56, 0.92) 25%,
+    rgba(43, 87, 72, 0.25) 45%,
     rgba(43, 87, 72, 0) 65%
   );
   z-index: 1;
@@ -169,13 +155,13 @@ function goBack() {
 .chapter-detail-container::after {
   content: "";
   position: absolute;
-  bottom: 0; left: 0; 
-  width: 100vw; 
+  bottom: 0; left: 0;
+  width: 100vw;
   height: 45vh; /* 遮罩高度占屏幕下半部分 45% */
-  background: linear-gradient(to top, 
+  background: linear-gradient(to top,
     rgba(10, 25, 16, 0.92) 0%,   /* 最底部加深到 92%，确保文字托得极稳 */
-    rgba(10, 25, 16, 0.70) 30%, 
-    rgba(10, 25, 16, 0.35) 65%, 
+    rgba(10, 25, 16, 0.70) 30%,
+    rgba(10, 25, 16, 0.35) 65%,
     rgba(10, 25, 16, 0) 100%     /* 向上平滑消隐，完全透明 */
   );
   z-index: 1;
@@ -202,7 +188,7 @@ function goBack() {
   pointer-events: auto;
   position: absolute;
   top: 75px; left: 45px; width: 32%; height: calc(100vh - 100px);
-  box-sizing: border-box; display: flex; flex-direction: column; gap: 18px; 
+  box-sizing: border-box; display: flex; flex-direction: column; gap: 18px;
   z-index: 3; /* 高于底层渐变板 */
 }
 .media-massive-block {
@@ -217,7 +203,7 @@ function goBack() {
 }
 .placeholder-main-text { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); line-height: 1.4; }
 .wait-status-tag {
-  font-size: 11px; font-weight: bold; background: rgba(97, 135, 100, 0.3); 
+  font-size: 11px; font-weight: bold; background: rgba(97, 135, 100, 0.3);
   padding: 2px 8px; border-radius: 3px; color: #9CB080; border: 1px solid rgba(156, 176, 128, 0.2);
 }
 .metrics-minimal-grid {
@@ -240,16 +226,16 @@ function goBack() {
 /* ==================== 3. 右下角：纯文字排版叙事区 ==================== */
 .right-bottom-text-narrative-zone {
   position: absolute;
-  bottom: 0; right: 0; 
+  bottom: 0; right: 0;
   z-index: 3; /* 提至全局底层渐变之上，确保文本文字清晰可点 */
   pointer-events: auto;
-  padding: 0 45px 50px 0; 
+  padding: 0 45px 50px 0;
   box-sizing: border-box;
-  display: flex; 
-  flex-direction: column; 
-  align-items: flex-end; 
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   gap: 25px;
-  width: 520px; 
+  width: 520px;
   background: none !important; /* 彻底移除方块背景，改由全屏大底托住 */
 }
 
@@ -258,27 +244,27 @@ function goBack() {
   display: flex; flex-direction: column; gap: 24px; width: 100%;
 }
 .minimal-brief-section {
-  display: flex; flex-direction: column; gap: 8px; text-align: right; 
+  display: flex; flex-direction: column; gap: 8px; text-align: right;
 }
 .brief-title-tag {
-  font-size: 14px; font-weight: 800; margin: 0; letter-spacing: 2px; padding-right: 10px; 
+  font-size: 14px; font-weight: 800; margin: 0; letter-spacing: 2px; padding-right: 10px;
   color: #2ecc71; /* 使用高德/OSM 导航同款高饱和翠绿标签 */
-  border-right: 3px solid #2ecc71; line-height: 1; 
+  border-right: 3px solid #2ecc71; line-height: 1;
 }
 
 /* 💥 绝对整齐划一：三个简介正文在全局贯穿底部大渐变的映衬下，无论切到什么复杂的白底图都能完美护航 */
-.brief-paragraph-text { 
-  font-size: 14px; 
-  font-weight: 500; 
-  line-height: 1.7; 
-  color: rgba(255, 255, 255, 0.95); 
-  margin: 0; 
+.brief-paragraph-text {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
   text-align: justify;
 }
 
 /* 底部大标题行 */
 .giant-headline-row-right {
-  display: flex; align-items: baseline; justify-content: flex-end; 
+  display: flex; align-items: baseline; justify-content: flex-end;
   gap: 15px; white-space: nowrap; width: 100%; margin-top: 5px;
 }
 .active-project-code {
@@ -286,10 +272,10 @@ function goBack() {
 }
 .narrative-giant-title {
   font-size: 50px; font-weight: 900; margin: 0; letter-spacing: -1.5px;
-  
+
   /* ✨ 完美保全：大标题高级、微妙的由白到中度灰绿的文字渐变色 */
   background: linear-gradient(to bottom, #ffffff 30%, #9CB080 100%);
-  -webkit-background-clip: text; 
+  -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }

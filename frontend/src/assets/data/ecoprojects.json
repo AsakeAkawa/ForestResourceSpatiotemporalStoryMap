@@ -1,88 +1,186 @@
 {
   "projects": [
     {
-      "id": "saihanba",
-      "projectCode": "SHFC2601-04-01-01",
-      "name": "塞罕坝机械林场",
+      "id": "sanbei",
+      "projectCode": "GCXM-01",
+      "name": "三北防护林建设工程",
       "category": "防护林类",
-      "region": "华北地区",
-      "startYear": 1962,
+      "region": "西北·华北·东北",
+      "startYear": 1978,
       "status": "持续建设中",
-      "tags": ["三北防护林", "河北围场", "1962"],
-      "geoCoord": [117.2, 42.4],
+      "tags": ["三北防护林", "绿色长城", "1978"],
+      "geoCoord": [115.0, 40.8],
+      "wmsLayer": "eco_story_map:sanbeifanghulin",
+      "wmsStyle": "boundary_sanbeifanghulin",
+      "wmsColor": "#e41a1c",
       "baseInfo": {
-        "fullName": "河北塞罕坝掉机械林场建设工程",
-        "bgText": "建场前当地气候恶劣，沙化严重，处于‘风沙紧逼北京城’的绝境。国家为阻隔浑善达克沙地南侵，决定建立大型封山育林基地。",
-        "timeLineDesc": "1962年建场；1980s完成初期造林；2002年通过ISO14001环境认证；2025年进入高质量综合管护阶段。",
-        "areaDesc": "地处河北省承德市围场满族蒙古族自治县北部，内蒙古高原南缘，地理跨度大。"
+        "fullName": "三北防护林体系建设工程",
+        "bgText": "1978年启动的世界最大生态工程，横贯西北、华北、东北13个省区市，规划期限73年，被誉为中国的'绿色长城'。工程区面积406.9万平方公里，占国土面积42.4%，旨在从根本上改变三北地区风沙危害和水土流失的严峻局面。",
+        "timeLineDesc": "1978年一期工程启动；1986年二期接续；2001年四期工程完成；2020年五期收官；目前进入六期高质量建设阶段。",
+        "areaDesc": "东起黑龙江宾县，西至新疆乌孜别里山口，北抵国境线，南沿天津、汾河、渭河、洮河下游一线，东西长4480公里，南北宽560-1460公里。"
       },
       "indicators": {
-        "targets": "全面恢复北方天然天然屏障，构建京津冀绿色防沙带。",
-        "measures": "人工机械造林、针阔混交林改良、精细化育苗、智慧防火网格管护。",
+        "targets": "构筑北方绿色生态屏障，控制风沙危害，保持水土，改善农牧业生产条件，保障国家生态安全。",
+        "measures": "人工造林、飞播造林、封山封沙育林、退化林修复、草原保护、水土流失治理。",
         "stats": [
-          { "label": "累计治理面积", "value": "115万亩" },
-          { "label": "当前森林覆盖率", "value": "86.0%" },
-          { "label": "林木总蓄积量", "value": "1012万m³" },
-          { "label": "年涵养源水量", "value": "2.84亿m³" }
+          { "label": "累计造林保存面积", "value": "3014万公顷" },
+          { "label": "工程区森林覆盖率", "value": "13.57%" },
+          { "label": "治理沙化土地", "value": "3300万公顷" },
+          { "label": "涉及省区市", "value": "13个" }
         ]
       },
       "multimedia": {
-        "audioUrl": "/audio/saihanba_intro.mp3",
+        "audioUrl": "/audio/sanbei_intro.mp3",
         "videoUrl": "https://www.w3schools.com/html/mov_bbb.mp4",
         "stories": [
-          { "title": "六女上坝", "content": "1964年，承德女高六位姑娘放弃高考，毅然奔赴塞罕坝，在大棚里顶风冒雪育苗。" }
+          { "title": "绿色长城", "content": "三北防护林工程被联合国环境规划署授予'全球500佳'称号，是世界上最大的植树造林工程，邓小平同志亲笔题词'绿色长城'。" }
         ],
         "rsImages": {
-          "before": "https://images.unsplash.com/photo-1618083707368-b3823daa2726?auto=format&fit=crop&w=800&q=80",
+          "before": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80",
           "after": "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=800&q=80"
         },
         "timeSteps": [
-          { "year": "1962", "title": "林场建立", "detail": "362名平均年龄不足24岁的创业者奔赴荒原。" },
-          { "year": "1984", "title": "成林初显", "detail": "攻克高原育苗难关，人工林保存面积跃居全国前列。" },
-          { "year": "2017", "title": "卫士地球奖", "detail": "塞罕坝林场建设者荣获联合国‘地球卫士奖’。" }
+          { "year": "1978", "title": "工程启动", "detail": "党中央国务院批准启动三北防护林体系建设工程，开创中国大规模生态建设先河。" },
+          { "year": "2001", "title": "四期收官", "detail": "四期工程完成，累计造林保存面积突破2200万公顷，三北地区生态面貌显著改善。" },
+          { "year": "2020", "title": "五期完成", "detail": "五期工程收官，森林覆盖率从1977年的5.05%提升至13.57%，沙化土地扩展趋势得到根本遏制。" }
         ]
       }
     },
     {
-      "id": "youyu",
-      "projectCode": "SHFC2601-04-01-02",
-      "name": "右玉县防护林",
-      "category": "荒漠治理类",
-      "region": "西北地区",
-      "startYear": 1949,
-      "status": "成果巩固中",
-      "tags": ["毛乌素边缘", "山西右玉", "1949"],
-      "geoCoord": [112.4, 40.0],
+      "id": "tianranlin",
+      "projectCode": "GCXM-02",
+      "name": "天然林资源保护工程",
+      "category": "生态保育类",
+      "region": "长江上游·黄河上中游·东北内蒙古",
+      "startYear": 1998,
+      "status": "持续建设中",
+      "tags": ["天然林保护", "禁伐限伐", "1998"],
+      "geoCoord": [106.5, 29.5],
+      "wmsLayer": "eco_story_map:tianranlinbaohu",
+      "wmsStyle": "boundary_tianranlinbaohu",
+      "wmsColor": "#377eb8",
       "baseInfo": {
-        "fullName": "山西右玉县生态荒漠化综合防治工程",
-        "bgText": "地处晋北黄土高原，毛乌素沙漠天然风口，建国初期全县森林覆盖率不足0.3%，沙进人退，面临不毛之地的绝境。",
-        "timeLineDesc": "1949年首任县委书记发起植树；历任班子展开绿色接力；2010年基本消除成片荒漠；2025年转型生态林业经济。",
-        "areaDesc": "山西省朔州市右玉县全域，地处晋蒙交界山口要塞。"
+        "fullName": "天然林资源保护工程",
+        "bgText": "1998年长江、松花江特大洪水后，国家痛定思痛，全面启动天然林保护工程。对长江上游、黄河上中游及东北内蒙古等重点国有林区实施禁伐限伐，从根本上扭转天然林过度消耗的局面，被誉为中国林业的'拐点之战'。",
+        "timeLineDesc": "1998年试点启动；2000年一期全面实施；2011年二期接续；2020年完成阶段性目标并转入长期保育机制。",
+        "areaDesc": "覆盖长江上游、黄河上中游、东北内蒙古等重点国有林区，涉及17个省（区、市），工程区总面积约3.2亿公顷。"
       },
       "indicators": {
-        "targets": "将塞上不毛之地彻底改造成生态宜居绿洲，锁住风沙口。",
-        "measures": "全民义务植树、苍头河湿地保护、小流域综合治理、退耕还林衔接。",
+        "targets": "全面停止天然林商业性采伐，恢复和稳定天然林生态系统功能，保护生物多样性，构筑国家生态安全屏障。",
+        "measures": "全面禁伐限伐、森林管护与抚育、公益林建设、国有林区职工转岗安置、生态效益补偿、中幼龄林抚育。",
         "stats": [
-          { "label": "全县绿化面积", "value": "169万亩" },
-          { "label": "森林覆盖率", "value": "57.0%" },
-          { "label": "沙化地治理率", "value": "95.5%" },
-          { "label": "林业生态产值", "value": "3.2亿元" }
+          { "label": "累计管护面积", "value": "19.44亿亩" },
+          { "label": "天然林蓄积量", "value": "136.7亿m³" },
+          { "label": "工程总投资", "value": "5000亿元" },
+          { "label": "涉及省份", "value": "17个" }
         ]
       },
       "multimedia": {
-        "audioUrl": "/audio/youyu_intro.mp3",
+        "audioUrl": "/audio/tianranlin_intro.mp3",
         "videoUrl": "https://www.w3schools.com/html/mov_bbb.mp4",
         "stories": [
-          { "title": "二十任书记的接力", "content": "70多年来，右玉县历任20多任县委书记，关关难过关关过，唯一不变的是手里那把植树锹。" }
+          { "title": "砍树人到看树人", "content": "东北林区数十万伐木工人放下油锯，转型为森林管护员，从'砍树吃饭'到'看树养家'，见证了中国林业的历史性转折。" }
         ],
         "rsImages": {
-          "before": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80",
+          "before": "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80",
           "after": "https://images.unsplash.com/photo-1502082553048-f009c37129b9?auto=format&fit=crop&w=800&q=80"
         },
         "timeSteps": [
-          { "year": "1949", "title": "第一锹土", "detail": "确立‘换班不换向，一任接着一任干’的植树祖训。" },
-          { "year": "2000", "title": "绿化达标", "detail": "全县生态面貌发生根本性扭转，森林覆盖率突破40%。" },
-          { "year": "2020", "title": "绿水青山基地", "detail": "获评国家‘绿水青山就是金山银山’实践创新基地。" }
+          { "year": "1998", "title": "洪灾警醒", "detail": "特大洪水后，党中央国务院果断决策启动天然林保护试点，四川、云南等省率先停伐。" },
+          { "year": "2000", "title": "一期全面启动", "detail": "国务院批准《天然林资源保护工程实施方案》，总投资968亿元，涉及17个省份。" },
+          { "year": "2020", "title": "长效机制建立", "detail": "天然林保护纳入国家生态文明建设常态化制度安排，全面实现从木材生产向生态保护的历史转型。" }
+        ]
+      }
+    },
+    {
+      "id": "tuigenghuanlin",
+      "projectCode": "GCXM-03",
+      "name": "退耕还林工程",
+      "category": "生态修复类",
+      "region": "全国25°以上坡耕地集中区",
+      "startYear": 1999,
+      "status": "成果巩固中",
+      "tags": ["退耕还林", "坡耕地", "1999"],
+      "geoCoord": [116.0, 28.5],
+      "wmsLayer": "eco_story_map:tuigenghuanlin",
+      "wmsStyle": "boundary_tuigenghuanlin",
+      "wmsColor": "#4daf4a",
+      "baseInfo": {
+        "fullName": "退耕还林工程",
+        "bgText": "1999年，四川、陕西、甘肃三省率先试点，标志着世界规模最大的生态补偿工程正式启幕。工程通过将水土流失严重的陡坡耕地和沙化耕地恢复为森林植被，从根本上扭转了长江黄河上中游水土流失加剧的态势，惠及数亿农民。",
+        "timeLineDesc": "1999年三省试点；2002年全面铺开；2007年暂停后重启；2014年实施新一轮退耕还林还草；2020年完成上一轮规划任务。",
+        "areaDesc": "覆盖全国25个省（区、市）及新疆生产建设兵团，重点实施区为长江上游、黄河上中游及重要湖库周边等生态脆弱区。"
+      },
+      "indicators": {
+        "targets": "将生态脆弱区坡耕地和沙化耕地恢复为林地草地，控制水土流失，改善区域生态环境，促进农村产业结构调整。",
+        "measures": "坡耕地退耕造林、宜林荒山荒地造林、封山育林、退耕地后续产业扶持、基本口粮田建设、农村能源建设。",
+        "stats": [
+          { "label": "累计退耕还林", "value": "5.22亿亩" },
+          { "label": "中央累计投资", "value": "5174亿元" },
+          { "label": "惠及农民", "value": "4100万户" },
+          { "label": "林草植被覆盖", "value": "提高8.2%" }
+        ]
+      },
+      "multimedia": {
+        "audioUrl": "/audio/tuigenghuanlin_intro.mp3",
+        "videoUrl": "https://www.w3schools.com/html/mov_bbb.mp4",
+        "stories": [
+          { "title": "从'越垦越穷'到'绿满山川'", "content": "在陕北黄土高原，农民告别了祖辈沿袭的陡坡耕种，退耕还林让光秃秃的黄土峁重新披上绿装，也带来了苹果、核桃等富民产业。" }
+        ],
+        "rsImages": {
+          "before": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80",
+          "after": "https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=800&q=80"
+        },
+        "timeSteps": [
+          { "year": "1999", "title": "三省试点", "detail": "朱镕基总理考察陕北后提出'退耕还林、封山绿化、以粮代赈、个体承包'十六字方针，四川、陕西、甘肃率先启动。" },
+          { "year": "2014", "title": "新一轮启动", "detail": "国务院批准实施新一轮退耕还林还草总体方案，将25°以上坡耕地等纳入新一轮实施范围。" },
+          { "year": "2020", "title": "成效卓著", "detail": "工程区林草植被覆盖度显著提升，水土流失面积减少，年入黄河泥沙量锐减超过4亿吨。" }
+        ]
+      }
+    },
+    {
+      "id": "tumuhauncao",
+      "projectCode": "GCXM-04",
+      "name": "退牧还草工程",
+      "category": "草原恢复类",
+      "region": "内蒙古·新疆·青海·西藏·甘肃·四川",
+      "startYear": 2003,
+      "status": "持续建设中",
+      "tags": ["退牧还草", "草原恢复", "2003"],
+      "geoCoord": [111.7, 41.0],
+      "wmsLayer": "eco_story_map:tumuhauncao",
+      "wmsStyle": "boundary_tumuhauncao",
+      "wmsColor": "#984ea3",
+      "baseInfo": {
+        "fullName": "退牧还草生态恢复工程",
+        "bgText": "为遏制天然草原持续退化、沙化的严峻态势，国家于2003年在西部8省区启动退牧还草工程。通过围栏封育、禁牧休牧轮牧、补播改良等综合措施，恢复草原生态功能，促进草畜平衡，保障牧区可持续发展。",
+        "timeLineDesc": "2003年首批试点在内蒙古等8省区启动；2005年全面铺开；2011年纳入草原生态保护补助奖励机制；2020年草原综合植被盖度显著回升。",
+        "areaDesc": "覆盖内蒙古、新疆、青海、西藏、甘肃、四川、宁夏、云南等主要牧区省份，工程区天然草原面积约3.93亿公顷。"
+      },
+      "indicators": {
+        "targets": "遏制草原退化趋势，恢复草原植被覆盖度与生产力，实现草畜平衡与草原生态系统良性循环。",
+        "measures": "围栏封育禁牧、季节性休牧轮牧、退化草原补播改良、人工饲草地建设、舍饲棚圈配套、牲畜品种改良。",
+        "stats": [
+          { "label": "围栏封育面积", "value": "12.3亿亩" },
+          { "label": "草原植被盖度", "value": "56.1%" },
+          { "label": "工程总投资", "value": "295亿元" },
+          { "label": "涉及牧区县", "value": "268个" }
+        ]
+      },
+      "multimedia": {
+        "audioUrl": "/audio/tumuhauncao_intro.mp3",
+        "videoUrl": "https://www.w3schools.com/html/mov_bbb.mp4",
+        "stories": [
+          { "title": "围栏内外", "content": "在内蒙古锡林郭勒草原，牧民放下传统游牧方式，建起现代化舍饲棚圈，退化草原在围栏内重现往昔的碧绿与生机，草高了、水清了、天更蓝了。" }
+        ],
+        "rsImages": {
+          "before": "https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=800&q=80",
+          "after": "https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80"
+        },
+        "timeSteps": [
+          { "year": "2003", "title": "工程启动", "detail": "国务院批准启动退牧还草工程，首批在内蒙古等8省区开展禁牧、休牧、轮牧试点。" },
+          { "year": "2011", "title": "草原补奖", "detail": "国家建立草原生态保护补助奖励机制，退牧还草纳入长效政策框架，覆盖全部牧区半牧区县。" },
+          { "year": "2020", "title": "绿意回归", "detail": "全国草原综合植被盖度达56.1%，较工程启动前提高近15个百分点，草原生态恶化趋势得到整体遏制。" }
         ]
       }
     }
