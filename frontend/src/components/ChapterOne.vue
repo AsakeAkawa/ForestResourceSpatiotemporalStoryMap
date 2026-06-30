@@ -8,7 +8,7 @@
       </div>
       <div class="panel-inner-sep"></div>
       <div class="chart-wrapper split-half">
-        <div class="chart-art-title">阶段性森林蓄积量与净增幅 (亿立方米)</div>
+        <div class="chart-art-title">阶段性森林蓄积量 (亿立方米) 与增幅 (%)</div>
         <div ref="barChartRef" class="echart-container"></div>
       </div>
     </div>
@@ -20,7 +20,7 @@
       </div>
       <div class="panel-inner-sep"></div>
       <div class="chart-wrapper split-half">
-        <div class="chart-art-title">当年林业工程造林结构特征 (万公顷)</div>
+        <div class="chart-art-title">不同类型森林面积 (万公顷)</div>
         <div ref="structureChartRef" class="echart-container"></div>
       </div>
     </div>
@@ -98,42 +98,42 @@ const timelineNodes = [
 
 const historicalData = {
   1985: {
-    coverage: 12.54, volume: 90.3, volumeGrow: 1.22, structure: [110, 75, 45],
+    coverage: 12.6722, volume: 102, volumeGrow: null, structure: [12800, 400, 3500, 1300],
     pie: [
       { name: '东北', value: 16.37 }, { name: '华北', value: 12.17 }, { name: '华东', value: 14.79 },
       { name: '华中', value: 9.51 }, { name: '华南', value: 10.70 }, { name: '西南', value: 26.94 }, { name: '西北', value: 9.53 }
     ]
   },
   1995: {
-    coverage: 13.82, volume: 112.7, volumeGrow: 2.24, structure: [170, 105, 60],
+    coverage: 13.9669, volume: 112.66, volumeGrow: 10.50, structure: [13500, 450, 3800, 1400],
     pie: [
       { name: '东北', value: 16.71 }, { name: '华北', value: 11.10 }, { name: '华东', value: 15.36 },
       { name: '华中', value: 10.16 }, { name: '华南', value: 11.31 }, { name: '西南', value: 26.93 }, { name: '西北', value: 8.43 }
     ]
   },
   2000: {
-    coverage: 16.41, volume: 124.9, volumeGrow: 2.44, structure: [270, 200, 105],
+    coverage: 16.5888, volume: 124.56, volumeGrow: 10.60, structure: [14500, 500, 4200, 1500],
     pie: [
       { name: '东北', value: 15.02 }, { name: '华北', value: 9.89 }, { name: '华东', value: 15.90 },
       { name: '华中', value: 10.73 }, { name: '华南', value: 11.40 }, { name: '西南', value: 28.98 }, { name: '西北', value: 8.09 }
     ]
   },
   2010: {
-    coverage: 18.40, volume: 151.9, volumeGrow: 2.64, structure: [360, 275, 160],
+    coverage: 18.5953, volume: 137.21, volumeGrow: 10.20, structure: [16300, 600, 5000, 1700],
     pie: [
       { name: '东北', value: 14.74 }, { name: '华北', value: 10.33 }, { name: '华东', value: 15.36 },
       { name: '华中', value: 10.95 }, { name: '华南', value: 11.07 }, { name: '西南', value: 29.14 }, { name: '西北', value: 8.42 }
     ]
   },
   2014: {
-    coverage: 20.36, volume: 162.8, volumeGrow: 2.88, structure: [385, 300, 195],
+    coverage: 20.5783, volume: 151.37, volumeGrow: 10.30, structure: [17500, 650, 5300, 1800],
     pie: [
       { name: '东北', value: 14.26 }, { name: '华北', value: 10.51 }, { name: '华东', value: 14.98 },
       { name: '华中', value: 10.81 }, { name: '华南', value: 11.43 }, { name: '西南', value: 29.47 }, { name: '西北', value: 8.54 }
     ]
   },
   2024: {
-    coverage: 23.92, volume: 195.2, volumeGrow: 3.24, structure: [465, 370, 265],
+    coverage: 24.1796, volume: 175.6, volumeGrow: 16.00, structure: [19735.16, 701.97, 5862.61, 2112.84],
     pie: [
       { name: '东北', value: 13.39 }, { name: '华北', value: 10.96 }, { name: '华东', value: 14.24 },
       { name: '华中', value: 10.66 }, { name: '华南', value: 11.64 }, { name: '西南', value: 29.74 }, { name: '西北', value: 9.37 }
@@ -200,17 +200,32 @@ function updateDynamicCharts() {
     lineChartInstance.dispatchAction({ type: 'showTip', seriesIndex: 0, dataIndex: idx })
   }
 
-  // 2. 柱状图 (左下)
+  // 2. 柱状图 (左下) — 蓄积量（亿立方米）+ 增幅（%）双轴
   if (barChartInstance) {
     barChartInstance.setOption({
       backgroundColor: 'transparent',
-      tooltip: { trigger: 'axis', backgroundColor: 'rgba(10,25,16,0.95)' },
-      grid: { left: '15%', right: '5%', top: '15%', bottom: '15%' },
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(10,25,16,0.95)',
+        formatter: (params) => {
+          const vol = params.find(p => p.seriesName === '总蓄积量')
+          const grow = params.find(p => p.seriesName === '增幅')
+          let html = `<strong>${params[0].axisValue} 年</strong><br/>`
+          if (vol) html += `蓄积量：${vol.value} 亿立方米<br/>`
+          if (grow && grow.value != null) html += `增幅：${grow.value}%`
+          else if (grow && grow.value == null) html += `增幅：—`
+          return html
+        }
+      },
+      grid: { left: '15%', right: '15%', top: '15%', bottom: '15%' },
       xAxis: { type: 'category', data: years, axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } } },
-      yAxis: { type: 'value', splitLine: { lineStyle: { color: 'rgba(255,255,255,0.03)' } } },
+      yAxis: [
+        { type: 'value', name: '亿立方米', nameTextStyle: { color: 'rgba(255,255,255,0.4)', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(255,255,255,0.03)' } } },
+        { type: 'value', name: '%', nameTextStyle: { color: 'rgba(255,255,255,0.4)', fontSize: 10 }, splitLine: { show: false } }
+      ],
       series: [
         { name: '总蓄积量', type: 'bar', data: years.map(y => historicalData[y].volume), itemStyle: { color: '#27ae60' }, barWidth: '35%' },
-        { name: '年净增幅', type: 'line', data: years.map(y => historicalData[y].volumeGrow), itemStyle: { color: '#f1c40f' }, lineStyle: { width: 2 } }
+        { name: '增幅', type: 'line', yAxisIndex: 1, data: years.map(y => historicalData[y].volumeGrow), itemStyle: { color: '#f1c40f' }, lineStyle: { width: 2 }, connectNulls: false }
       ]
     })
     const idx = years.indexOf(currentYear.value)
@@ -232,22 +247,27 @@ function updateDynamicCharts() {
     })
   }
 
-  // 4. 条形图 (右下)
+  // 4. 条形图 (右下) — 不同类型森林面积
   if (structureChartInstance) {
+    const forestTypes = ['乔木林地', '竹林地', '灌木林地', '其他林地']
+    const structureData = currentNarrative.value.structure
     structureChartInstance.setOption({
       backgroundColor: 'transparent',
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }, formatter: (params) => `${params[0].name}<br/>面积：${params[0].value} 万公顷` },
       grid: { left: '25%', right: '8%', top: '10%', bottom: '15%' },
       xAxis: { type: 'value', splitLine: { show: false }, axisLabel: { color: 'rgba(255,255,255,0.4)' } },
-      yAxis: { type: 'category', data: ['人工防护林', '天然次生林', '经济兼修林'], axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }, axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 10 } },
+      yAxis: { type: 'category', data: forestTypes, axisLine: { lineStyle: { color: 'rgba(255,255,255,0.2)' } }, axisLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 10 } },
       series: [{
         type: 'bar',
-        data: currentNarrative.value.structure,
+        data: structureData,
         itemStyle: {
-          color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [
-            { offset: 0, color: 'rgba(26, 188, 156, 0.2)' },
-            { offset: 1, color: '#1abc9c' }
-          ]),
+          color: (params) => {
+            const colors = ['#27ae60', '#1abc9c', '#f39c12', '#3498db']
+            return new echarts.graphic.LinearGradient(0, 0, 1, 0, [
+              { offset: 0, color: colors[params.dataIndex] + '33' },
+              { offset: 1, color: colors[params.dataIndex] }
+            ])
+          },
           borderRadius: [0, 4, 4, 0]
         },
         barWidth: '40%'

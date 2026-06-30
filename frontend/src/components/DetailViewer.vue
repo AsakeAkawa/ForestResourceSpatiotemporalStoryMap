@@ -8,6 +8,7 @@
     </header>
 
     <div class="left-full-sidebar">
+      <!-- ① 成效指标卡片 -->
       <div class="metrics-minimal-grid">
         <div class="metric-wrapper-item" v-for="stat in projectData?.indicators?.stats" :key="stat.label">
           <div class="metric-art-title">{{ stat.label }}</div>
@@ -15,14 +16,7 @@
         </div>
       </div>
 
-      <div class="media-massive-block placeholder-style">
-        <div class="placeholder-inside-view">
-          <span class="placeholder-icon">🛰️</span>
-          <span class="placeholder-main-text">LANDSAT / MODIS 历史遥感影像演变对比</span>
-          <span class="wait-status-tag">内容待插入</span>
-        </div>
-      </div>
-
+      <!-- ② 里程碑时间轴（移至此处，指标下方） -->
       <div class="horizontal-timeline-wrapper">
         <div class="horizontal-timeline-track">
           <div class="timeline-step-node" v-for="step in projectData?.multimedia?.timeSteps" :key="step.year">
@@ -33,15 +27,59 @@
         </div>
       </div>
 
-      <div class="media-massive-block placeholder-style">
-        <div class="placeholder-inside-view">
-          <span class="placeholder-icon">📺</span>
-          <span class="placeholder-main-text">现场一线生态无人机高清纪实视频</span>
-          <span class="wait-status-tag">内容待插入</span>
+      <!-- ③ 视频播放区块 -->
+      <div class="media-massive-block video-block">
+        <div class="block-head-bar">
+          <span class="block-head-icon">🎬</span>
+          <span class="block-head-label">工程纪实视频</span>
+        </div>
+        <div class="video-embed-wrapper">
+          <iframe
+            :src="projectData?.multimedia?.videoUrl"
+            class="video-iframe"
+            frameborder="0"
+            allowfullscreen
+            allow="autoplay; encrypted-media"
+            @error="onVideoError"
+          ></iframe>
+        </div>
+      </div>
+
+      <!-- ④ 图片轮播 -->
+      <div class="media-massive-block carousel-block" v-if="projectData?.multimedia?.gallery?.length">
+        <div class="block-head-bar">
+          <span class="block-head-icon">📷</span>
+          <span class="block-head-label">工程一线实景纪实</span>
+          <span class="carousel-counter">{{ carouselIndex + 1 }} / {{ projectData.multimedia.gallery.length }}</span>
+        </div>
+        <div class="carousel-stage" @mouseenter="stopCarousel" @mouseleave="startCarousel">
+          <transition name="fade-cross" mode="out-in">
+            <div class="carousel-slide" :key="carouselIndex">
+              <img
+                :src="projectData.multimedia.gallery[carouselIndex].src"
+                :alt="projectData.multimedia.gallery[carouselIndex].caption"
+                class="carousel-img"
+                @error="onImgError"
+              />
+              <div class="carousel-caption-bar">
+                {{ projectData.multimedia.gallery[carouselIndex].caption }}
+              </div>
+            </div>
+          </transition>
+        </div>
+        <div class="carousel-dots">
+          <span
+            v-for="(_img, idx) in projectData.multimedia.gallery"
+            :key="idx"
+            class="carousel-dot"
+            :class="{ 'is-active': idx === carouselIndex }"
+            @click="carouselIndex = idx"
+          ></span>
         </div>
       </div>
     </div>
 
+    <!-- 右下角：文字叙事区（移除工程发展历程） -->
     <div class="right-bottom-text-narrative-zone">
 
       <div class="floating-brief-vertical-stack">
@@ -66,6 +104,7 @@
       </div>
     </div>
 
+    <!-- 右上角 -->
     <div class="map-top-right-vacuum-zone">
       <div class="vacuum-gis-tip">[ 实时联动：OpenLayers WMS 工程边界已加载 ]</div>
     </div>
@@ -74,7 +113,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ecoDatabase from '../assets/data/ecoprojects.json'
 
@@ -84,6 +123,29 @@ const router = useRouter()
 const targetId = ref(route.params.id || 'sanbei')
 const projectData = computed(() => ecoDatabase.projects.find(p => p.id === targetId.value))
 
+// 🎠 图片轮播
+const carouselIndex = ref(0)
+let carouselTimer = null
+const intervalMs = 3500
+
+function startCarousel() {
+  stopCarousel()
+  const gallery = projectData.value?.multimedia?.gallery
+  if (!gallery || gallery.length <= 1) return
+  carouselTimer = setInterval(() => {
+    carouselIndex.value = (carouselIndex.value + 1) % gallery.length
+  }, intervalMs)
+}
+function stopCarousel() {
+  clearInterval(carouselTimer)
+}
+
+// 切换工程时重置轮播
+watch(() => targetId.value, () => {
+  carouselIndex.value = 0
+  startCarousel()
+})
+
 onMounted(() => {
   const appNavBar = document.querySelector('.top-minimal-nav-bar')
   if (appNavBar) appNavBar.style.display = 'none'
@@ -91,42 +153,53 @@ onMounted(() => {
   const map = window.olMap
   const boundaryLayers = window.boundaryLayers
   if (map && boundaryLayers) {
-    // 🗺️ 只显示当前项目对应的 WMS 边界图层，隐藏其余3个
     Object.entries(boundaryLayers).forEach(([id, layer]) => {
       layer.setVisible(id === targetId.value)
     })
-
-    // 地图视角移动到项目中心
-    const project = projectData.value
-    if (project && project.geoCoord && window.ol) {
-      const compensatedCenter = [project.geoCoord[0] - 4.5, project.geoCoord[1] - 0.8]
+    // 🗺️ 保持全国视角居中偏右，左侧面板不遮挡中国大陆
+    if (window.ol) {
       map.getView().animate({
-        center: window.ol.proj.fromLonLat(compensatedCenter),
-        zoom: 6,
+        center: window.ol.proj.fromLonLat([96.0, 37.0]),
+        zoom: 4.5,
         duration: 1200
       })
     }
   }
+  startCarousel()
 })
 
 onUnmounted(() => {
+  stopCarousel()
   const appNavBar = document.querySelector('.top-minimal-nav-bar')
   if (appNavBar) appNavBar.style.display = 'flex'
-
-  // 🗺️ 恢复所有4个边界图层为可见（返回 ChapterTwo 时全部显示）
   const boundaryLayers = window.boundaryLayers
   if (boundaryLayers) {
     Object.values(boundaryLayers).forEach(l => l.setVisible(true))
   }
+  // 🗺️ 返回时缩放到全国范围
+  const map = window.olMap
+  if (map && window.ol) {
+    map.getView().animate({
+      center: window.ol.proj.fromLonLat([104.0, 35.0]),
+      zoom: 5,
+      duration: 1200
+    })
+  }
 })
 
+function onImgError(e) {
+  e.target.style.display = 'none'
+}
+function onVideoError(e) {
+  // iframe 加载失败，静默处理
+}
 function goBack() {
   router.push('/')
 }
 </script>
 
 <style scoped>
-/* ==================== 🌳 FULL-WIDTH BOTTOM GRADIENT SYSTEM (V11) ==================== */
+/* ==================== FULL-WIDTH BOTTOM GRADIENT SYSTEM ==================== */
 .chapter-detail-container {
   position: fixed;
   top: 0; left: 0; width: 100vw; height: 100vh;
@@ -136,7 +209,6 @@ function goBack() {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* 🌓 左侧固有过渡带（只负责左侧多媒体面板背景保护） */
 .chapter-detail-container::before {
   content: "";
   position: absolute;
@@ -150,19 +222,17 @@ function goBack() {
   z-index: 1;
 }
 
-/* 💥 核心变革：横向 100% 贯穿整个大屏底部的无边界深度渐变 */
-/* 它和左侧过渡带在底部十字交叉，形成一个极度自然、柔和的 L 型暗色遮罩视界，无任何硬边缘线条 */
 .chapter-detail-container::after {
   content: "";
   position: absolute;
   bottom: 0; left: 0;
   width: 100vw;
-  height: 45vh; /* 遮罩高度占屏幕下半部分 45% */
+  height: 45vh;
   background: linear-gradient(to top,
-    rgba(10, 25, 16, 0.92) 0%,   /* 最底部加深到 92%，确保文字托得极稳 */
+    rgba(10, 25, 16, 0.92) 0%,
     rgba(10, 25, 16, 0.70) 30%,
     rgba(10, 25, 16, 0.35) 65%,
-    rgba(10, 25, 16, 0) 100%     /* 向上平滑消隐，完全透明 */
+    rgba(10, 25, 16, 0) 100%
   );
   z-index: 1;
 }
@@ -187,76 +257,111 @@ function goBack() {
 .left-full-sidebar {
   pointer-events: auto;
   position: absolute;
-  top: 75px; left: 45px; width: 32%; height: calc(100vh - 100px);
-  box-sizing: border-box; display: flex; flex-direction: column; gap: 18px;
-  z-index: 3; /* 高于底层渐变板 */
+  top: 75px; left: 45px; width: 34%; height: calc(100vh - 100px);
+  box-sizing: border-box; display: flex; flex-direction: column; gap: 10px;
+  z-index: 3;
 }
+
+/* ① 指标卡片行 */
+.metrics-minimal-grid {
+  display: flex; gap: 12px; background: rgba(255, 255, 255, 0.01);
+  padding: 8px 0; border-bottom: 1px solid rgba(156, 176, 128, 0.15);
+  flex-shrink: 0;
+}
+.metric-wrapper-item { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.metric-art-title { font-size: 11px; font-weight: 500; color: #9CB080; opacity: 0.7; }
+.metric-actual-value { font-size: 22px; font-weight: 700; color: #ffffff; font-family: 'Impact', sans-serif; }
+
+/* ② 时间轴 */
+.horizontal-timeline-wrapper {
+  background: rgba(39, 51, 56, 0.4); border: 1px solid rgba(156, 176, 128, 0.15);
+  border-radius: 4px; padding: 10px 12px; flex-shrink: 0;
+}
+.horizontal-timeline-track { display: flex; justify-content: space-between; gap: 8px; }
+.timeline-step-node { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+.step-node-year { font-size: 11px; font-weight: 700; color: #618764; font-family: monospace; }
+.step-node-dot { width: 4px; height: 4px; background: rgba(255,255,255,0.35); border-radius: 50%; }
+.step-node-text { font-size: 10px; color: rgba(255,255,255,0.6); text-align: center; white-space: nowrap; }
+
+/* 通用媒体块 */
 .media-massive-block {
-  flex: 1.5; position: relative; background: rgba(39, 51, 56, 0.85);
+  position: relative; background: rgba(39, 51, 56, 0.85);
   border: 1px solid rgba(156, 176, 128, 0.15); border-radius: 6px; overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+  display: flex; flex-direction: column;
 }
-.placeholder-inside-view {
-  width: 100%; height: 100%; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 8px; color: #9CB080;
-  padding: 20px; box-sizing: border-box; text-align: center;
+.block-head-bar {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border-bottom: 1px solid rgba(156, 176, 128, 0.12);
+  flex-shrink: 0;
 }
-.placeholder-main-text { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.9); line-height: 1.4; }
-.wait-status-tag {
-  font-size: 11px; font-weight: bold; background: rgba(97, 135, 100, 0.3);
-  padding: 2px 8px; border-radius: 3px; color: #9CB080; border: 1px solid rgba(156, 176, 128, 0.2);
-}
-.metrics-minimal-grid {
-  display: flex; gap: 20px; background: rgba(255, 255, 255, 0.01);
-  padding: 10px 0; border-bottom: 1px solid rgba(156, 176, 128, 0.15);
-}
-.metric-wrapper-item { display: flex; flex-direction: column; gap: 4px; }
-.metric-art-title { font-size: 13px; font-weight: 500; color: #9CB080; opacity: 0.7; }
-.metric-actual-value { font-size: 26px; font-weight: 700; color: #ffffff; font-family: 'Impact', sans-serif; }
+.block-head-icon { font-size: 14px; }
+.block-head-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.85); flex: 1; }
 
-.horizontal-timeline-wrapper {
-  background: rgba(39, 51, 56, 0.4); border: 1px solid rgba(156, 176, 128, 0.15); border-radius: 4px; padding: 12px 14px;
-}
-.horizontal-timeline-track { display: flex; justify-content: space-between; gap: 12px; }
-.timeline-step-node { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
-.step-node-year { font-size: 12px; font-weight: 700; color: #618764; font-family: monospace; }
-.step-node-dot { width: 5px; height: 5px; background: rgba(255,255,255,0.35); border-radius: 50%; }
-.step-node-text { font-size: 11px; color: rgba(255,255,255,0.65); text-align: center; white-space: nowrap; }
+/* ③ 视频区块 */
+.video-block { flex: 1.5; min-height: 0; }
+.video-embed-wrapper { flex: 1; position: relative; background: #000; min-height: 0; }
+.video-iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; }
 
-/* ==================== 3. 右下角：纯文字排版叙事区 ==================== */
+/* ④ 轮播区块 */
+.carousel-block { flex: 1.2; min-height: 0; }
+.carousel-counter { font-size: 10px; color: rgba(255,255,255,0.4); font-family: monospace; }
+.carousel-stage { flex: 1; position: relative; overflow: hidden; min-height: 0; }
+.carousel-slide { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+.carousel-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.carousel-caption-bar {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  color: rgba(255,255,255,0.9); font-size: 11px; font-weight: 500;
+  padding: 20px 10px 6px; text-align: center;
+}
+
+.carousel-dots {
+  display: flex; justify-content: center; gap: 6px;
+  padding: 8px 0; flex-shrink: 0;
+}
+.carousel-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.25); cursor: pointer; transition: all 0.25s;
+}
+.carousel-dot.is-active { background: #2ecc71; transform: scale(1.4); }
+
+/* 轮播过渡 */
+.fade-cross-enter-active, .fade-cross-leave-active { transition: opacity 0.4s ease; }
+.fade-cross-enter-from, .fade-cross-leave-to { opacity: 0; }
+
+/* ==================== 3. 右下角：纯文字叙事区 ==================== */
 .right-bottom-text-narrative-zone {
   position: absolute;
   bottom: 0; right: 0;
-  z-index: 3; /* 提至全局底层渐变之上，确保文本文字清晰可点 */
+  z-index: 3;
   pointer-events: auto;
   padding: 0 45px 50px 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 25px;
-  width: 520px;
-  background: none !important; /* 彻底移除方块背景，改由全屏大底托住 */
+  gap: 20px;
+  width: 560px;
+  background: none !important;
 }
 
-/* 简介文本垂直叠放 */
 .floating-brief-vertical-stack {
-  display: flex; flex-direction: column; gap: 24px; width: 100%;
+  display: flex; flex-direction: column; gap: 22px; width: 100%;
 }
 .minimal-brief-section {
-  display: flex; flex-direction: column; gap: 8px; text-align: right;
+  display: flex; flex-direction: column; gap: 6px; text-align: right;
 }
 .brief-title-tag {
-  font-size: 14px; font-weight: 800; margin: 0; letter-spacing: 2px; padding-right: 10px;
-  color: #2ecc71; /* 使用高德/OSM 导航同款高饱和翠绿标签 */
+  font-size: 15px; font-weight: 800; margin: 0; letter-spacing: 2px; padding-right: 10px;
+  color: #2ecc71;
   border-right: 3px solid #2ecc71; line-height: 1;
 }
-
-/* 💥 绝对整齐划一：三个简介正文在全局贯穿底部大渐变的映衬下，无论切到什么复杂的白底图都能完美护航 */
 .brief-paragraph-text {
   font-size: 14px;
   font-weight: 500;
-  line-height: 1.7;
+  line-height: 1.8;
   color: rgba(255, 255, 255, 0.95);
   margin: 0;
   text-align: justify;
@@ -265,25 +370,20 @@ function goBack() {
 /* 底部大标题行 */
 .giant-headline-row-right {
   display: flex; align-items: baseline; justify-content: flex-end;
-  gap: 15px; white-space: nowrap; width: 100%; margin-top: 5px;
-}
-.active-project-code {
-  font-size: 18px; font-weight: 800; color: #2ecc71; font-family: monospace; letter-spacing: 1px;
+  gap: 14px; white-space: nowrap; width: 100%; margin-top: 4px;
 }
 .narrative-giant-title {
-  font-size: 50px; font-weight: 900; margin: 0; letter-spacing: -1.5px;
-
-  /* ✨ 完美保全：大标题高级、微妙的由白到中度灰绿的文字渐变色 */
+  font-size: 46px; font-weight: 900; margin: 0; letter-spacing: -1.5px;
   background: linear-gradient(to bottom, #ffffff 30%, #9CB080 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-/* ==================== 4. 右上角：OpenLayers 地图物理穿透盲区 ==================== */
+/* ==================== 4. 右上角 ==================== */
 .map-top-right-vacuum-zone {
   position: absolute;
-  top: 0; right: 0; width: 64vw; height: calc(100vh - 300px); z-index: 2;
+  top: 0; right: 0; width: 64vw; height: calc(100vh - 320px); z-index: 2;
   box-sizing: border-box; padding: 100px 45px 0 0;
   display: flex; justify-content: flex-end; align-items: flex-start;
 }

@@ -7,6 +7,13 @@
       <span><strong>重大生态工程：</strong>鼠标靠近站点触发感应，点击站点解锁档案并可查看详情。</span>
     </div>
 
+    <div class="legend-panel" v-if="activePointId === null">
+      <div class="legend-item" v-for="p in pointsData" :key="p.id">
+        <span class="legend-rect" :style="legendStyle(p.id)"></span>
+        <span class="legend-label">{{ p.name }}</span>
+      </div>
+    </div>
+
     <div class="fullscreen-backgrounds" :class="{ 'is-dimmed': activePointId !== null }">
       <div 
         v-for="point in pointsData" 
@@ -76,10 +83,17 @@ const options = { maxOpacityOnActive: 0.5, maxDistance: 120000, activeOn: 30000 
 // 🗺️ 从 ecoprojects.json 加载4个重大生态工程点位数据
 // 背景图按工程类型匹配：防护林→林海 / 天然林→密林 / 退耕→梯田青山 / 退牧→草原
 const projectImages = {
-  sanbei: 'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1600&q=80',  // 三北防护林：森林远景
-  tianranlin: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=1600&q=80',  // 天然林：茂密林冠
-  tuigenghuanlin: 'https://images.pexels.com/photos/37860109/pexels-photo-37860109.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=1600&q=80',  // 退耕还林：青山梯田
-  tumuhauncao: 'https://images.pexels.com/photos/28700656/pexels-photo-28700656.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=1600&q=80'  // 退牧还草：广阔草原
+    sanbei: '/images/ecoprojects/sanbei/04_status_2.jpg',
+    tianranlin: '/images/ecoprojects/tianranlin/06_forest_protection.jpg',
+    tuigenghuanlin: '/images/ecoprojects/tuigenghuanlin/07_2020_shaanxi.jpg',
+    tumuhauncao: '/images/ecoprojects/tumuhauncao/06_result_2.jpg'
+  }
+// 地图填充图案映射
+const patternMap = {
+  sanbei: 'diagonal',
+  tianranlin: 'crosshatch',
+  tuigenghuanlin: 'horizontal',
+  tumuhauncao: 'dots'
 }
 const pointsData = ref(
   ecoDatabase.projects.map((p) => ({
@@ -91,9 +105,34 @@ const pointsData = ref(
     img: projectImages[p.id] || 'https://images.unsplash.com/photo-1542273917363-3b1817f69a2d?auto=format&fit=crop&w=1600&q=80',
     geoCoord: p.geoCoord,
     color: p.wmsColor || '#2ecc71',
+    pattern: patternMap[p.id] || 'diagonal',
     currentOpacity: 0
   }))
 )
+
+// 🎨 图例块样式：复刻面状填充图案（斜线/十字网/横线/点阵）
+function legendStyle(id) {
+  const pt = pointsData.value.find(p => p.id === id)
+  if (!pt) return {}
+  const c = pt.color
+  const p = pt.pattern
+  let bg
+  const size = '8px'
+  if (p === 'diagonal')
+    bg = `repeating-linear-gradient(45deg, ${c} 0, ${c} 1.5px, transparent 1.5px, transparent ${size})`
+  else if (p === 'crosshatch')
+    bg = `repeating-linear-gradient(45deg, ${c} 0, ${c} 1.5px, transparent 1.5px, transparent ${size}), repeating-linear-gradient(-45deg, ${c} 0, ${c} 1.5px, transparent 1.5px, transparent ${size})`
+  else if (p === 'horizontal')
+    bg = `repeating-linear-gradient(0deg, ${c} 0, ${c} 1.5px, transparent 1.5px, transparent ${size})`
+  else  // dots
+    bg = `radial-gradient(circle, ${c} 1.5px, transparent 1.5px), rgba(255,255,255,0.08)`
+  return {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    backgroundImage: bg,
+    backgroundSize: p === 'dots' ? '8px 8px' : 'auto',
+    borderColor: c
+  }
+}
 
 const activePointId = ref(null)
 const tooltipElement = ref(null)
@@ -229,8 +268,13 @@ onUnmounted(() => {
 .map-tooltip { display: none; background: rgba(27, 77, 47, 0.9); color: white; padding: 6px 14px; border-radius: 4px; font-size: 13px; font-weight: bold; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.3); pointer-events: none; z-index: 99; border: 1px solid rgba(255,255,255,0.2); }
 .top-mission-banner { pointer-events: auto; position: absolute; top: 105px; left: 50%; transform: translateX(-50%); background: rgba(10, 25, 16, 0.8); backdrop-filter: blur(4px); border: 1px solid rgba(46, 204, 113, 0.2); color: white; padding: 8px 20px; border-radius: 20px; font-size: 12px; z-index: 10; }
 
+.legend-panel { pointer-events: auto; position: absolute; bottom: 30px; right: 30px; display: flex; flex-direction: column; gap: 10px; z-index: 10; background: rgba(10, 25, 16, 0.75); backdrop-filter: blur(6px); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 14px 18px; }
+.legend-item { display: flex; align-items: center; gap: 10px; }
+.legend-rect { width: 28px; height: 22px; border-radius: 3px; border: 2px solid; flex-shrink: 0; }
+.legend-label { font-size: 14px; color: rgba(255,255,255,0.9); font-weight: 600; letter-spacing: 1.5px; }
+
 .fullscreen-backgrounds { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-.full-bg-element { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+.full-bg-element { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-size: cover; background-position: center; transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1); will-change: opacity; }
 
 .fullscreen-text-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 3; }
 .epic-text-layout { pointer-events: auto; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; box-sizing: border-box; }
@@ -248,7 +292,7 @@ onUnmounted(() => {
     rgba(6, 18, 12, 0.5) 60%, 
     rgba(6, 18, 12, 0) 100%
   );
-  backdrop-filter: blur(8px);
+  /* backdrop-filter removed: GPU perf */
   z-index: -1;
 }
 
