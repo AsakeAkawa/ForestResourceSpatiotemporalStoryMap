@@ -168,8 +168,9 @@ onMounted(() => {
     visible: false, // 初始篇章为首页，默认隐藏
     zIndex: 999,    // 将层级拉高，防止被底图压盖
     className: 'forest-cover-layer',
+    // dev: 走 Vite 代理绕过 CORS；prod: 直连 GeoServer
     source: new ImageWMS({
-      url: '/geoserver/forest/wms',
+      url: import.meta.env.DEV ? '/geoserver/forest/wms' : 'http://8.152.203.155:8080/geoserver/forest/wms',
       projection: 'EPSG:4326',
       params: {
         'SERVICE': 'WMS',
@@ -188,20 +189,24 @@ onMounted(() => {
   forestWmsLayer.on('postrender', (event) => {
     const ctx = event.context
     const canvas = ctx.canvas
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-    const data = imageData.data
-    const GAMMA = 0.35
-    for (let i = 0; i < data.length; i += 4) {
-      const gray = data[i]
-      const alpha = data[i+3]
-      if (alpha === 0 || gray === 0) continue
-      const t = Math.pow(gray / 255, GAMMA)
-      data[i]     = Math.round(240 - t * 225)
-      data[i+1]   = Math.round(235 - t * 165)
-      data[i+2]   = Math.round(210 - t * 195)
-      data[i+3]   = Math.round(80  + t * 175)
+    try {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+      const data = imageData.data
+      const GAMMA = 0.35
+      for (let i = 0; i < data.length; i += 4) {
+        const gray = data[i]
+        const alpha = data[i+3]
+        if (alpha === 0 || gray === 0) continue
+        const t = Math.pow(gray / 255, GAMMA)
+        data[i]     = Math.round(240 - t * 225)
+        data[i+1]   = Math.round(235 - t * 165)
+        data[i+2]   = Math.round(210 - t * 195)
+        data[i+3]   = Math.round(80  + t * 175)
+      }
+      ctx.putImageData(imageData, 0, 0)
+    } catch (_) {
+      // prod 环境跨域无法读取像素 → 显示原始灰度图
     }
-    ctx.putImageData(imageData, 0, 0)
   })
 
   // 🗺️ 创建4个重大生态工程边界矢量图层（从 public/data/ 异步加载 GeoJSON）
