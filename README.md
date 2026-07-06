@@ -4,6 +4,15 @@
 
 **Landscape Revitalized: 40-Year Spatiotemporal Map Platform for China's Ecological Restoration Projects** — An interactive WebGIS-based story map platform that presents the spatiotemporal evolution of China's forest ecosystems (1985–2024) through dynamic narratives, map exploration, and real-time remote sensing analysis.
 
+[![Vue 3](https://img.shields.io/badge/Vue-3.x-4FC08D?logo=vuedotjs)](https://vuejs.org/)
+[![Vite](https://img.shields.io/badge/Vite-latest-646CFF?logo=vite)](https://vite.dev/)
+[![OpenLayers](https://img.shields.io/badge/OpenLayers-7.x-1F6B75?logo=openlayers)](https://openlayers.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python)](https://www.python.org/)
+[![GeoServer](https://img.shields.io/badge/GeoServer-WMS/WCS-8CB44A?logo=geoserver)](https://geoserver.org/)
+[![ECharts](https://img.shields.io/badge/ECharts-5.x-AA344D)](https://echarts.apache.org/)
+[![Landsat](https://img.shields.io/badge/Data-Landsat_5/8/9-808080)](https://landsat.gsfc.nasa.gov/)
+
 ---
 
 ## 技术栈 / Tech Stack
@@ -20,42 +29,92 @@
 
 ---
 
-## 系统概述 / System Overview
+## 系统架构 / System Architecture
 
-本系统采用 B/S 前后端分离的分层逻辑架构。前端基于 Vue.js 3 构建响应式单页应用，Vite 作为构建工具；地图渲染采用 OpenLayers，统计图表采用 ECharts 5。后端采用 FastAPI 提供 RESTful API，NumPy + Rasterio 实现遥感像元级计算。空间数据通过 GeoServer 发布标准 OGC 服务（WMS / WCS）。
+```mermaid
+graph TB
+    subgraph 表现展示层["🎨 表现展示层 Presentation"]
+        VUE[Vue 3 + Vite<br/>OpenLayers + ECharts]
+    end
 
-系统自上而下分为：表现展示层、应用服务层、算法服务层、地图服务层、数据管理服务层、数据库层及基础设施层。
+    subgraph 应用服务层["⚙️ 应用服务层 Application"]
+        API[RESTful API<br/>FastAPI]
+        AUTH[用户认证<br/>登录/会话管理]
+    end
 
-The system adopts a B/S architecture with separate frontend and backend. The frontend uses Vue.js 3 + Vite for responsive SPA, OpenLayers for map rendering, and ECharts 5 for charts. The backend provides RESTful APIs via FastAPI, with NumPy + Rasterio powering pixel-level remote sensing computation. Spatial data is served through GeoServer via standard OGC protocols (WMS / WCS).
+    subgraph 算法服务层["🔬 算法服务层 Algorithm"]
+        NDVI[NDVI 植被指数]
+        FVC[FVC 覆盖度]
+        NDWI[NDWI 水体指数]
+        BSI[BSI 裸土指数]
+        RSEI[RSEI 生态指数<br/>PCA 降维]
+        CHANGE[变化检测<br/>逐像元差分]
+    end
+
+    subgraph 地图服务层["🗺️ 地图服务层 Map Service"]
+        GS[GeoServer<br/>WMS / WCS]
+    end
+
+    subgraph 数据层["💾 数据层 Data"]
+        CATCD[CATCD 森林覆盖<br/>1985-2024 全国]
+        L5[Landsat 5<br/>1986-1995]
+        L8[Landsat 8<br/>2015-2021]
+        L9[Landsat 9<br/>2022-2024]
+        ECO[生态工程<br/>GeoJSON 边界]
+    end
+
+    VUE -->|HTTP| API
+    VUE -->|WMS GetMap| GS
+    API -->|WCS GetCoverage| GS
+    API --> NDVI --> FVC
+    API --> BSI
+    API --> NDWI
+    API --> RSEI
+    NDVI --> CHANGE
+    GS --> CATCD
+    GS --> L5
+    GS --> L8
+    GS --> L9
+    VUE -->|GeoJSON| ECO
+```
 
 ---
 
 ## 功能篇章 / Functional Chapters
 
-### 篇章一 · 全国生态时空演变 (1985–2024)
+### 登录页面 / Login Portal
 
-### Chapter 1 · National Forest Spatiotemporal Evolution
+> [!NOTE]
+> **打字机过场动画**是本平台的标志性设计——登录后触发三段式叙事过渡：首段逐字打印中国森林生态成就数据，次段浮现习近平生态文明金句，末段呈现"进入平台"入口。全程支持空格键跳过，暗色毛玻璃背景叠加森林底图，营造沉浸式故事感。
+
+The login portal features a signature **typewriter-style narrative transition**: after authentication, three sequential stages unfold — ecological achievement statistics typed line-by-line, a Xi Jinping quote on ecological civilization, and finally the platform entrance. Spacebar to skip. Dark glassmorphism backdrop over forest imagery creates an immersive storytelling atmosphere.
+
+### 篇章〇 · 首页 / Chapter 0 · Home
+
+> [!NOTE]
+> 平台门户页面，左侧 45% 区域呈现深绿渐变遮罩 + 毛玻璃质感，承载项目标题"山河复翠"（渐变金绿大字）、副标题、项目背景与内容概述。右侧透出全幅卫星底图。底部附团队信息与审图号标注。
+
+The landing page displays the project title "山河复翠" (Landscape Revitalized) in gradient gold-green typography, with project background and content overview on a dark gradient mask covering the left 45% of the viewport. The right side reveals the full satellite basemap.
+
+### 篇章一 · 全国生态时空演变 (1985–2024) / Chapter 1 · National Forest Spatiotemporal Evolution
 
 - 6 个标准年份（1985 / 1995 / 2000 / 2010 / 2014 / 2024）全国森林覆盖栅格 WMS 动态加载
 - 前端 `postrender` 钩子实时 Gamma 拉伸 + 颜色渲染（灰度 → 绿米渐变）
 - 四张 ECharts 动态图表：森林覆盖率折线图、蓄积量双轴柱状图、七区占比饼图、林种结构条形图
 - 底部时间轴：节点切换 + 自动轮播，年份切换联动图表与地图图层
 
-### 篇章二 · 重大生态工程
+### 篇章二 · 重大生态工程 / Chapter 2 · Major Ecological Projects
 
-### Chapter 2 · Major Ecological Projects
+- 四大工程边界矢量图层（三北防护林 / 天然林保护 / 退耕还林 / 退牧还草），填充图案与图例一致（斜线 / 十字网 / 横线 / 点阵）
+- 地图交互点位：鼠标靠近触发工程名称提示 + 半透明背景渐显；点击展开简介卡片 → 跳转详情页
+- 详情页：成效指标卡、里程碑时间轴、B 站纪实视频嵌入、实景照片自动轮播、立项背景 / 治理举措 / 空间跨度文字叙事
 
-- 四大工程边界矢量图层（三北防护林 / 天然林保护 / 退耕还林 / 退牧还草），SVG 填充图案匹配图例
-- 地图交互点位：鼠标靠近触发工程名称提示 + 半透明背景；点击展开简介卡片 → 跳转详情页
-- 详情页：成效指标卡、里程碑时间轴、B 站纪实视频、实景照片自动轮播、立项背景 / 治理举措 / 空间跨度文字叙事
-
-### 篇章三 · 区域遥感数据实时分析（库布齐沙漠）
-
-### Chapter 3 · Real-Time Remote Sensing Analysis (Kubuqi Desert)
+### 篇章三 · 区域遥感数据实时分析（库布齐沙漠） / Chapter 3 · Real-Time Remote Sensing Analysis (Kubuqi Desert)
 
 - **遥感指数计算**：NDVI / FVC / NDWI / BSI / RSEI 五种生态指标，按选定年份一键计算
 - **空间变化检测**：双时相 NDVI 逐像元差分，红-白-绿发散色带渲染
 - **后端计算流水线**：GeoServer WCS 按需获取多波段影像 → NumPy 像元级运算 → 色带渲染 → PNG 返回前端叠加
+- **分阶段进度动画**：图像调用 → 指数计算 → 专题图渲染，进度条均匀滚动
 - **结果导出**：GeoTIFF（LZW 压缩）/ PNG 专题图（含色标图例）/ PDF 面积统计报告
 - **内存缓存**：预览计算后缓存原始数据，重复导出零等待
 
@@ -69,6 +128,7 @@ ForestResourceSpatiotemporalStoryMap/
 │   ├── src/
 │   │   ├── App.vue                 # OpenLayers 地图、WMS 图层、颜色渲染
 │   │   ├── components/
+│   │   │   ├── Login.vue           # 登录页（打字机过场动画）
 │   │   │   ├── ChapterHome.vue     # 篇章〇 · 首页
 │   │   │   ├── ChapterOne.vue      # 篇章一 · 全国森林时空演变
 │   │   │   ├── ChapterTwo.vue      # 篇章二 · 重大生态工程
@@ -127,9 +187,10 @@ pip install -r requirements.txt
 python -m uvicorn main:app --host 0.0.0.0 --port 8000
 ```
 
-开发环境下 Vite 代理将 `/api` 转发至 `localhost:8000`，`/geoserver` 转发至阿里云 GeoServer。
-
-In development, Vite proxies `/api` → `localhost:8000` and `/geoserver` → Alibaba Cloud GeoServer.
+> [!TIP]
+> 开发环境下 Vite 代理将 `/api` 转发至 `localhost:8000`，`/geoserver` 转发至阿里云 GeoServer，从而绕过浏览器跨域限制。
+>
+> In development, Vite proxies `/api` → `localhost:8000` and `/geoserver` → Alibaba Cloud GeoServer, bypassing browser CORS restrictions.
 
 ---
 
