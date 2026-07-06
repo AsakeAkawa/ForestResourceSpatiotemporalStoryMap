@@ -50,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 import 'ol/ol.css'
@@ -116,17 +116,20 @@ const mapSources = [
   { id: 'osm', name: 'OSM底图' }
 ]
 
-// 🌟 动态更新 GeoServer WMS 图层参数的方法 (保持机制不变，ImageWMS 同样完美支持此方法)
+// 🌟 动态更新 GeoServer WMS 图层参数的方法
+// 各年份图层名不统一，使用映射表
+const forestLayerMap = {
+  1985: 'forest:CATCD_1985_1000',
+  1995: 'forest:CATCD_1995_1000',
+  2000: 'forest:CATCD_2000_1000',
+  2010: 'forest:CATCD_2010_1000',
+  2014: 'forest:CATCD_2014_1000',
+  2024: 'forest:CATCD_2024_1000'
+}
 function updateForestWmsYear(year) {
   if (!forestWmsLayer) return
-  
-  // 拼接动态图层名，如 eco_story_map:catcd_1985_forest_cover
-  const layerName = `eco_story_map:catcd_${year}_forest_cover`
-  
-  // 利用 OpenLayers 提供的 updateParams 机制，无缝刷新单一动态渲染栅格
-  forestWmsLayer.getSource().updateParams({
-    'LAYERS': layerName
-  })
+  const layerName = forestLayerMap[year] || forestLayerMap[1985]
+  forestWmsLayer.getSource().updateParams({ 'LAYERS': layerName })
 }
 
 onMounted(() => {
@@ -164,20 +167,41 @@ onMounted(() => {
   forestWmsLayer = new ImageLayer({
     visible: false, // 初始篇章为首页，默认隐藏
     zIndex: 999,    // 将层级拉高，防止被底图压盖
+    className: 'forest-cover-layer',
     source: new ImageWMS({
-      url: 'http://172.26.63.161:8080/geoserver/eco_story_map/wms',
+      url: '/geoserver/forest/wms',
       projection: 'EPSG:4326',
       params: {
         'SERVICE': 'WMS',
         'VERSION': '1.1.0',
         'REQUEST': 'GetMap',
-        'LAYERS': 'eco_story_map:catcd_1985_forest_cover',
+        'LAYERS': 'forest:CATCD_1985_1000',
         'FORMAT': 'image/png',
         'TRANSPARENT': 'true'
       },
       ratio: 1,
       serverType: 'geoserver'
     })
+  })
+
+  // 🌈 植被覆盖图层颜色渲染：将灰度图映射为绿色渐变
+  forestWmsLayer.on('postrender', (event) => {
+    const ctx = event.context
+    const canvas = ctx.canvas
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+    const data = imageData.data
+    const GAMMA = 0.35
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = data[i]
+      const alpha = data[i+3]
+      if (alpha === 0 || gray === 0) continue
+      const t = Math.pow(gray / 255, GAMMA)
+      data[i]     = Math.round(240 - t * 225)
+      data[i+1]   = Math.round(235 - t * 165)
+      data[i+2]   = Math.round(210 - t * 195)
+      data[i+3]   = Math.round(80  + t * 175)
+    }
+    ctx.putImageData(imageData, 0, 0)
   })
 
   // 🗺️ 创建4个重大生态工程边界矢量图层（从 public/data/ 异步加载 GeoJSON）
@@ -293,6 +317,13 @@ onMounted(() => {
   })
 })
 
+// 强制管控：篇章切换时，遥感结果图层仅篇章三可见
+watch(currentIndex, (idx) => {
+  if (window.__ndviLayer) {
+    window.__ndviLayer.setVisible(idx === 3)
+  }
+})
+
 function changeMapSource(sourceId) {
   if (currentSourceId.value === sourceId) return
   currentSourceId.value = sourceId
@@ -313,7 +344,6 @@ function switchPage(index) {
   }
   // 🗺️ 工程边界层：第二篇章”重大生态工程”（索引为 2）时全部显示
   Object.values(boundaryLayers).forEach(l => l.setVisible(index === 2))
-
   if (!view) return
   
   if (index === 0 || index === 2) {

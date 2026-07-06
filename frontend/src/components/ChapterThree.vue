@@ -32,10 +32,7 @@
           <div class="setting-item">
             <label class="setting-label">分析区域范围</label>
             <select v-model="calcConfig.region" class="gis-select">
-              <option value="all">库布齐沙漠全区 (默认)</option>
-              <option value="dugui">独贵特拉镇区域</option>
-              <option value="jigesitai">吉格斯太镇区域</option>
-              <option value="hangjin">杭锦旗北部沙区</option>
+              <option value="all">库布齐沙漠全区</option>
             </select>
           </div>
 
@@ -59,7 +56,10 @@
           </div>
 
           <button class="gis-btn btn-primary" :disabled="isComputing" @click="triggerGEE">
-            {{ isComputing ? 'GEE 像元级运算中...' : '调用 GEE 云端实时计算' }}
+            {{ isComputing ? '卫星影像传输计算中 (约20-30秒)...' : '开始计算' }}
+          </button>
+          <button class="gis-btn btn-clear" @click="removeLayer" :disabled="!hasResult">
+            清除结果
           </button>
         </section>
 
@@ -80,13 +80,25 @@
 
           <div class="setting-item">
             <label class="setting-label">差分检测基准指标</label>
-            <select v-model="compareConfig.indicator" class="gis-select">
-              <option v-for="(label, key) in indicatorMap" :key="key" :value="key">{{ key }} - {{ label }}</option>
-            </select>
+            <div class="indicator-grid">
+              <div
+                v-for="(label, key) in indicatorMap"
+                :key="key"
+                class="indicator-card"
+                :class="{ selected: compareConfig.indicator === key }"
+                @click="compareConfig.indicator = key"
+              >
+                <div class="card-header">
+                  <span class="dot"></span>
+                  <span class="title">{{ key }}</span>
+                </div>
+                <p class="desc">{{ label }}</p>
+              </div>
+            </div>
           </div>
 
           <button class="gis-btn btn-warn" :disabled="isComputing" @click="triggerCompare">
-            {{ isComputing ? '空间多时相差分中...' : '执行两期逐像元差分' }}
+            {{ isComputing ? '正在进行逐像元差分计算...' : '执行两期逐像元差分' }}
           </button>
         </section>
       </div>
@@ -105,9 +117,14 @@
 
     <main class="main-display">
       <section class="map-viewport">
-        <div v-if="isComputing" class="gis-loading-overlay apple-blur-panel">
-          <div class="radar-scan"></div>
-          <p class="loading-text">正在拉取 Landsat/Sentinel-2 影像计算数据...</p>
+        <div v-if="isComputing" class="gis-loading-overlay">
+          <div class="load-box apple-blur-panel">
+            <div class="radar-scan"></div>
+            <p class="loading-text">{{ computingStage }}</p>
+            <div class="progress-track">
+              <div class="progress-fill" :style="{ width: progressPct + '%' }"></div>
+            </div>
+          </div>
         </div>
 
         <div class="map-canvas-placeholder">
@@ -140,9 +157,15 @@
 
 <script setup>
 import { ref, reactive, computed } from "vue"
+import ImageLayer from 'ol/layer/Image'
+import Static from 'ol/source/ImageStatic'
 
-const yearRange = Array.from({ length: 2024 - 1985 + 1 }, (_, i) => 1985 + i)
+// Only years with data: 1986-1995 (L5), 2015-2024 (L8/L9)
+const availableYears = [...Array.from({length:10},(_,i)=>1986+i), ...Array.from({length:10},(_,i)=>2015+i)]
+const yearRange = availableYears
+
 const indicatorMap = {
+  NDVI: "归一化植被指数 (Normalized Difference Vegetation Index)",
   FVC: "植被覆盖度 (Fractional Vegetation Cover)",
   NDWI: "归一化水体指数 (Normalized Water Index)",
   BSI: "裸土指数 (Bare Soil Index)",
@@ -151,11 +174,13 @@ const indicatorMap = {
 
 const activeSection = ref("index")
 const isComputing = ref(false)
+const computingStage = ref("")
+const progressPct = ref(0)
 
 const calcConfig = reactive({
   year: 2024,
   region: "all",
-  indicator: "FVC"
+  indicator: "NDVI"
 })
 
 const compareConfig = reactive({
@@ -165,50 +190,170 @@ const compareConfig = reactive({
 })
 
 const activeLegend = computed(() => {
-  if (activeSection.value === 'index') {
-    return {
-      title: `${calcConfig.indicator} 指数数值分级反演`,
-      colors: ['#a6611a', '#dfc27d', '#f5f5f5', '#80cdc1', '#018571'],
-      labels: ['0.0 (极低)', '0.2', '0.5', '0.8', '1.0 (极高)']
-    }
-  } else {
-    return {
-      title: `${compareConfig.indicator} 生态治理变化分级`,
-      colors: ['#d73027', '#f46d43', '#fee08b', '#d9ef8b', '#66bd63', '#1a9850'],
-      labels: ['显著退化', '轻微退化', '基本不变', '轻微改善', '显著改善']
-    }
+  const legends = {
+    NDVI:  { title: 'NDVI 植被指数分级', colors: ['#6e4000','#b58a2e','#e6c850','#b4d264','#78b43c','#328c1e','#0f4610'], labels: ['<0','0.0','0.2','0.4','0.6','0.8','1.0'] },
+    FVC:   { title: 'FVC 植被覆盖度分级', colors: ['#b4965a','#c3b964','#91be46','#50aa32','#1e8c28','#0a641e','#003c14'], labels: ['0.0 (裸土)','0.2','0.4','0.6','0.8','1.0 (全覆盖)'] },
+    NDWI:  { title: 'NDWI 水体指数分级', colors: ['#82501e','#c8aa78','#e6e1c8','#c8dceb','#64b4e6','#0a46d2','#051e64'], labels: ['<0 (旱地)','0.0','0.15','0.4','0.7','1.0 (深水)'] },
+    BSI:   { title: 'BSI 裸土指数分级', colors: ['#006400','#50a028','#dcd278','#c8aa5a','#b98c3c','#a0461e','#5a2805'], labels: ['<0 (茂密)','0.0','0.2','0.5','0.7','1.0 (荒漠)'] },
+    RSEI:  { title: 'RSEI 生态指数分级', colors: ['#b41e0f','#e6821e','#f5d23c','#d2dc50','#78c837','#28a028','#054614'], labels: ['0.0 (退化)','0.3','0.5','0.6','0.75','0.9','1.0 (优良)'] },
   }
+  const changeLegend = { title: '植被变化检测', colors: ['#b40a0a','#eb5050','#faae8c','#fceee6','#f5f5f5','#e1f2dc','#a0e182','#32b432','#006400'], labels: ['< -0.2','-0.10','-0.03','0.0','0.0','0.03','0.10','0.2','> 0.2'] }
+  const key = activeSection.value === 'index' ? calcConfig.indicator : 'CHANGE'
+  return legends[key] || changeLegend
 })
 
-const changeSection = (section) => {
-  activeSection.value = section
+const changeSection = (section) => { activeSection.value = section }
+const setIndicator = (ind) => { calcConfig.indicator = ind }
+
+// 图层管理
+let currentLayer = null
+const hasResult = ref(false)
+
+function apiPath(indicator, year) {
+  return `/api/${indicator.toLowerCase()}/${year}`
 }
 
-const setIndicator = (ind) => {
-  calcConfig.indicator = ind
-}
+function setStage(stage, pct) { computingStage.value = stage; progressPct.value = pct }
 
-const triggerGEE = () => {
-  isComputing.value = true
-  setTimeout(() => {
+async function triggerGEE() {
+  isComputing.value = true; progressPct.value = 0
+  const y = calcConfig.year, ind = calcConfig.indicator
+  try {
+    // 4 pre-completion stages, ~6s each = 24s animation to match ~25s real work
+    const stages = [
+      { text: `正在连接遥感数据服务...`,                       pct:  5 },
+      { text: `正在从 GeoServer 调用 ${y} 年卫星影像...`,      pct: 25 },
+      { text: `影像接收完成，正在计算 ${ind} 指数...`,          pct: 55 },
+      { text: `正在渲染专题图色带...`,                          pct: 80 },
+    ]
+    startProgressAnimation(stages, 6000)
+    const resp = await fetch(apiPath(ind, y))
+    if (!resp.ok) {
+      let detail = `服务器错误: ${resp.status}`
+      try { const e = await resp.json(); detail = e.detail || detail } catch (_) {}
+      throw new Error(detail)
+    }
+    await renderLayer(resp)
+    setStage(`计算完成 ✓`, 100)
+    await delay(600)
+  } catch (e) {
+    alert(`${calcConfig.indicator} 计算失败: ${e.message}`)
+    console.error(e)
+  } finally {
     isComputing.value = false
-  }, 800)
+  }
 }
 
-const triggerCompare = () => {
+function delay(ms) { return new Promise(r => setTimeout(r, ms)) }
+
+async function renderLayer(resp) {
+  const west  = parseFloat(resp.headers.get('X-Bounds-West'))
+  const south = parseFloat(resp.headers.get('X-Bounds-South'))
+  const east  = parseFloat(resp.headers.get('X-Bounds-East'))
+  const north = parseFloat(resp.headers.get('X-Bounds-North'))
+  const blob = await resp.blob()
+  const url = URL.createObjectURL(blob)
+  removeLayer()
+  const source = new Static({ url, projection: 'EPSG:4326', imageExtent: [west, south, east, north] })
+  currentLayer = new ImageLayer({ source, zIndex: 1000, opacity: 0.85 })
+  window.olMap.addLayer(currentLayer)
+  window.__ndviLayer = currentLayer
+  hasResult.value = true
+}
+
+function removeLayer() {
+  if (currentLayer && window.olMap) {
+    window.olMap.removeLayer(currentLayer)
+    currentLayer = null
+    window.__ndviLayer = null
+  }
+  hasResult.value = false
+}
+
+function makeChangeStages(y1, y2) {
+  return [
+    { text: `正在调用 ${y1} 年 (T1) 影像数据...`,          pct:  5 },
+    { text: `T1 接收完成，正在调用 ${y2} 年 (T2) 影像...`,  pct: 25 },
+    { text: `正在逐像元计算 NDVI 差分...`,                 pct: 55 },
+    { text: `正在渲染植被变化检测专题图...`,               pct: 80 },
+  ]
+}
+
+function startProgressAnimation(stages, stepMs) {
+  let i = 0
+  const tick = () => {
+    if (i >= stages.length) return
+    setStage(stages[i].text, stages[i].pct)
+    i++
+    if (i < stages.length) setTimeout(tick, stepMs)
+  }
+  tick()
+}
+
+const triggerCompare = async () => {
   if (compareConfig.startYear >= compareConfig.endYear) {
-    alert("分析提示：两期变化检测的结束年份必须大于起始年份。")
+    alert("结束年份必须大于起始年份。")
     return
   }
-  isComputing.value = true
-  setTimeout(() => {
+  isComputing.value = true; progressPct.value = 0
+  const y1 = compareConfig.startYear, y2 = compareConfig.endYear
+  // change detection fetches two images → ~50s; 4 stages × 12s = 48s animation
+  try {
+    const stages = makeChangeStages(y1, y2)
+    startProgressAnimation(stages, 12000)
+    const resp = await fetch(`/api/change/${y1}/${y2}`)
+    if (!resp.ok) {
+      let detail = `服务器错误: ${resp.status}`
+      try { const e = await resp.json(); detail = e.detail || detail } catch (_) {}
+      throw new Error(detail)
+    }
+    await renderLayer(resp)
+    setStage(`变化检测完成 ✓`, 100)
+    await delay(600)
+  } catch (e) {
+    alert(`变化检测失败: ${e.message}`)
+  } finally {
     isComputing.value = false
-  }, 800)
+  }
 }
 
-const executeExport = (format) => {
-  alert(`正在对当前视窗内数据进行几何裁剪与坐标系打包，导出目标格式：[${format}]。`)
+const executeExport = async (format) => {
+  // Determine indicator + year(s) based on active section
+  let indicator, year, year2
+  if (activeSection.value === 'index') {
+    indicator = calcConfig.indicator
+    year = calcConfig.year
+    year2 = undefined
+  } else {
+    indicator = 'CHANGE'
+    year = compareConfig.startYear
+    year2 = compareConfig.endYear
+  }
+  if (!hasResult.value) {
+    alert("请先执行计算，结果存在后才可导出。")
+    return
+  }
+  const params = new URLSearchParams({ format, indicator, year: String(year) })
+  if (year2) params.set('year2', String(year2))
+  try {
+    const resp = await fetch(`/api/export?${params}`)
+    if (!resp.ok) throw new Error(`服务器错误: ${resp.status}`)
+    const blob = await resp.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    const fn = resp.headers.get('Content-Disposition')?.match(/filename="(.+)"/)?.[1]
+             || `${indicator}_${year}.${format.toLowerCase()}`
+    a.download = fn
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    URL.revokeObjectURL(url)
+  } catch (e) {
+    alert(`导出失败: ${e.message}`)
+  }
 }
+
 </script>
 
 <style scoped>
@@ -297,6 +442,8 @@ const executeExport = (format) => {
 .gis-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 .btn-primary { background: #2ecc71; color: #050f0a; box-shadow: 0 4px 12px rgba(46,204,113,0.2); }
 .btn-warn { background: #e67e22; color: #ffffff; box-shadow: 0 4px 12px rgba(230,126,34,0.2); }
+.btn-clear { background: transparent; border: 1px solid rgba(255,255,255,0.2) !important; color: rgba(255,255,255,0.6); box-shadow: none; }
+.btn-clear:hover:not(:disabled) { background: rgba(255,107,107,0.15); border-color: #ff6b6b !important; color: #ff6b6b; }
 .gis-btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
 
 /* 内层微卡片隔离 */
@@ -322,9 +469,12 @@ const executeExport = (format) => {
 .coordinate-text { font-size: 11.5px; color: rgba(255,255,255,0.55); margin: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
 .target-text { font-size: 13px; margin-top: 3px; margin-bottom: 0; }
 
-.gis-loading-overlay { position: absolute; inset: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 5; border-radius: 8px; pointer-events: auto; }
-.loading-text { font-size: 14px; color: #fff; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
-.radar-scan { width: 36px; height: 36px; border: 2px solid rgba(46, 204, 113, 0.15); border-top-color: #2ecc71; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+.gis-loading-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; pointer-events: none; }
+.load-box { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 36px; border-radius: 12px; min-width: 340px; }
+.loading-text { font-size: 13px; color: #fff; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.8); margin: 0; white-space: nowrap; }
+.radar-scan { width: 28px; height: 28px; border: 2px solid rgba(46, 204, 113, 0.15); border-top-color: #2ecc71; border-radius: 50%; animation: spin 0.8s linear infinite; }
+.progress-track { width: 100%; height: 4px; background: rgba(255,255,255,0.12); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: #2ecc71; border-radius: 2px; transition: width 0.4s ease; }
 
 /* 科学图例弱化边界 */
 .gis-legend { position: absolute; bottom: 26px; right: 36px; padding: 14px 18px; border-radius: 8px; min-width: 250px; pointer-events: auto; }

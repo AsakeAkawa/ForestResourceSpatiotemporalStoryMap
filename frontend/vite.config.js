@@ -17,7 +17,17 @@ export default defineConfig({
     allowedHosts: [
       '.trycloudflare.com',  // 显式放行 Cloudflare 的所有二级域名
       'all'                  // 注入全放行关键字
-    ]
+    ],
+    proxy: {
+      '/geoserver': {
+        target: 'http://8.152.203.155:8080',
+        changeOrigin: true
+      },
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true
+      }
+    }
   },
 
   resolve: {

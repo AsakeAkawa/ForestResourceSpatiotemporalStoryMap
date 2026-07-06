@@ -27,12 +27,6 @@
 
     <div class="map-layer-placeholder" :key="currentYear">
       <div class="placeholder-border-box">
-        <div class="scan-line"></div>
-        <div class="layer-meta-info">
-          <span class="layer-title">GEOSERVER WMS 开放时空图层规范服务</span>
-          <h3 class="layer-year">{{ currentYear }} 年 全国森林覆盖栅格数据</h3>
-          <span class="layer-status" style="color: #2ecc71;">[ GeoServer 服务联动渲染中 ]</span>
-        </div>
       </div>
     </div>
 
@@ -58,7 +52,6 @@
         <div class="horizontal-track-line"></div>
 
         <div class="nodes-row-wrapper">
-          <div class="active-slider-cursor" :style="{ left: cursorLeft }"></div>
           <div
             v-for="(node, idx) in timelineNodes"
             :key="node.year"
@@ -156,12 +149,6 @@ let pieChartInstance = null
 let structureChartInstance = null
 
 const currentNarrative = computed(() => historicalData[currentYear.value])
-const cursorLeft = computed(() => {
-  const idx = timelineNodes.findIndex(n => n.year === currentYear.value)
-  const n = timelineNodes.length
-  return ((idx / (n - 1)) * 100) + '%'
-})
-
 // 🌟 核心监听：响应式年份被篡改或轮播改变时，立刻向外广播全局自定义事件
 watch(currentYear, (newYear) => {
   updateDynamicCharts()
@@ -366,12 +353,7 @@ onUnmounted(() => {
   width: 360px; height: 180px; background: rgba(46, 204, 113, 0.01);
   border: 1px dashed rgba(46, 204, 113, 0.12); border-radius: 6px; z-index: 2;
 }
-.placeholder-border-box { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-.scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 1px; background: linear-gradient(to right, transparent, rgba(46,204,113,0.4), transparent); animation: radarScan 4s linear infinite; }
-.layer-meta-info { text-align: center; }
-.layer-title { font-size: 10px; color: #2ecc71; letter-spacing: 0.5px; display: block; margin-bottom: 4px; opacity: 0.7; }
-.layer-year { font-size: 14px; font-weight: 700; margin: 0 0 4px 0; color: #ffffff; }
-.layer-status { font-size: 9.5px; color: rgba(255,255,255,0.2); font-family: monospace; }
+.placeholder-border-box { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 
 .bottom-composite-console {
   pointer-events: auto; 
@@ -428,10 +410,6 @@ onUnmounted(() => {
 
 .horizontal-axis-container { flex: 1; height: 100%; position: relative; display: flex; align-items: center; overflow: hidden; }
 .horizontal-track-line { position: absolute; left: 50px; right: 50px; top: 50%; transform: translateY(-50%); height: 3px; background: rgba(255,255,255,0.08); z-index: 1; }
-.active-slider-cursor {
-  position: absolute; top: 50%; transform: translate(-50%, -50%); width: 10px; height: 10px; background: #ffffff; border-radius: 50%; z-index: 3; box-shadow: 0 0 16px 5px #2ecc71; transition: left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
 .nodes-row-wrapper { display: flex; justify-content: space-between; position: relative; z-index: 2; width: 100%; height: 100%; align-items: center; padding: 0 55px; box-sizing: border-box; }
 .horizontal-node { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; cursor: pointer; position: relative; flex-shrink: 0; }
 
@@ -451,6 +429,4 @@ onUnmounted(() => {
 }
 
 .timeline-click-hint { font-size: 11px; color: rgba(255,255,255,0.2); width: 130px; text-align: right; flex-shrink: 0; padding-left: 15px; border-left: 1px solid rgba(255,255,255,0.05); }
-
-@keyframes radarScan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
 </style>
