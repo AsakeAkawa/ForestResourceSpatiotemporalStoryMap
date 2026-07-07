@@ -255,16 +255,27 @@ def _render_with_legend(data: np.ndarray, bins: list, title: str) -> bytes:
 
     img = Image.fromarray(rgba, mode="RGBA")
     draw = ImageDraw.Draw(img)
-    try:
-        font = ImageFont.truetype("arial.ttf", 16)
-        font_sm = ImageFont.truetype("arial.ttf", 12)
-    except:
+    # 尝试加载中文字体（Windows / Linux / macOS）
+    font = font_sm = None
+    for fp in ["C:/Windows/Fonts/msyh.ttc", "C:/Windows/Fonts/simhei.ttf",
+               "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+               "/System/Library/Fonts/PingFang.ttc"]:
+        try:
+            font = ImageFont.truetype(fp, 16)
+            font_sm = ImageFont.truetype(fp, 12)
+            break
+        except:
+            continue
+    if font is None:
         font = font_sm = ImageFont.load_default()
 
     draw.text((10, h+6), title, fill=(0,0,0), font=font)
-    # label min/max
-    draw.text((4, h+30), bins[0][1][:8], fill=(0,0,0), font=font_sm)
-    draw.text((w-80, h+30), bins[-1][1].rsplit(" ",1)[-1], fill=(0,0,0), font=font_sm)
+    # 图例数值标注：在每个色段边界下方标注阈值
+    for i, b in enumerate(bins):
+        x = int(i * w / (len(bins) - 1))
+        x = max(5, min(x, w - 50))  # 防止文字溢出
+        label = f"{b[0]:.2f}" if abs(b[0]) < 10 else str(int(b[0]))
+        draw.text((x, h + 34), label, fill=(0,0,0), font=font_sm)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)

@@ -110,10 +110,10 @@ const boundaryLayers = {} // 🗺️ 存储4个重大生态工程边界 TileWMS 
 
 const currentSourceId = ref('gaode-sat')
 const mapSources = [
-  { id: 'gaode-sat', name: '卫星遥感' },
-  { id: 'arcgis-dem', name: 'DEM' },
-  { id: 'gaode-vec', name: '高德矢量' },
-  { id: 'osm', name: 'OSM底图' }
+  { id: 'gaode-sat', name: '遥感数据' },
+  { id: 'arcgis-dem', name: '高程数据' },
+  { id: 'gaode-vec', name: '矢量数据' },
+  // { id: 'osm', name: 'OSM底图' }  // 暂时注释，保留恢复可能
 ]
 
 // 🌟 动态更新 GeoServer WMS 图层参数的方法
@@ -209,44 +209,12 @@ onMounted(() => {
     }
   })
 
-  // 🗺️ 创建4个重大生态工程边界矢量图层（从 public/data/ 异步加载 GeoJSON）
-  // 每种工程使用不同的填充图案区分：斜线 / 十字网 / 横线 / 点阵
-  function createPatternFill(color, patternType) {
-    const size = 16
-    const canvas = document.createElement('canvas')
-    canvas.width = size
-    canvas.height = size
-    const ctx = canvas.getContext('2d')
-    ctx.strokeStyle = color
-    ctx.lineWidth = 1
-    ctx.beginPath()
-    switch (patternType) {
-      case 'diagonal':  // 斜线 ///
-        ctx.moveTo(0, 0); ctx.lineTo(size, size)
-        ctx.moveTo(-size/2, 0); ctx.lineTo(size/2, size)
-        ctx.moveTo(size/2, 0); ctx.lineTo(size*1.5, size)
-        break
-      case 'crosshatch':  // 十字网格 #
-        ctx.moveTo(0, 0); ctx.lineTo(size, size)
-        ctx.moveTo(size, 0); ctx.lineTo(0, size)
-        break
-      case 'horizontal':  // 横线 ---
-        ctx.moveTo(0, size/2); ctx.lineTo(size, size/2)
-        break
-      case 'dots':  // 点阵 ...
-        ctx.fillStyle = color
-        ctx.fillRect(size/2 - 1, size/2 - 1, 2, 2)
-        break
-    }
-    ctx.stroke()
-    return ctx.createPattern(canvas, 'repeat')
-  }
-
+  // 🗺️ 创建4个重大生态工程边界矢量图层（半透明实色填充）
   const projectLayerConfigs = [
-    { id: 'sanbei', file: '/data/sanbei.geojson', color: '#e41a1c', pattern: 'diagonal' },
-    { id: 'tianranlin', file: '/data/tianranlin.geojson', color: '#377eb8', pattern: 'crosshatch' },
-    { id: 'tuigenghuanlin', file: '/data/tuigenghuanlin.geojson', color: '#4daf4a', pattern: 'horizontal' },
-    { id: 'tumuhauncao', file: '/data/tumuhauncao.geojson', color: '#984ea3', pattern: 'dots' },
+    { id: 'sanbei', file: '/data/sanbei.geojson', color: '#e41a1c' },
+    { id: 'tianranlin', file: '/data/tianranlin.geojson', color: '#377eb8' },
+    { id: 'tuigenghuanlin', file: '/data/tuigenghuanlin.geojson', color: '#4daf4a' },
+    { id: 'tumuhauncao', file: '/data/tumuhauncao.geojson', color: '#984ea3' },
   ]
   const geoJsonFormat = new GeoJSON()
   // 先创建空矢量图层（初始隐藏），异步加载 GeoJSON 后填充数据
@@ -258,7 +226,7 @@ onMounted(() => {
       source: vectorSource,
       style: new Style({
         stroke: new Stroke({ color: cfg.color, width: 2 }),
-        fill: new Fill({ color: createPatternFill(cfg.color, cfg.pattern) })
+        fill: new Fill({ color: cfg.color + '4D' })
       })
     })
     boundaryLayers[cfg.id] = vectorLayer
@@ -279,6 +247,38 @@ onMounted(() => {
       console.error('Failed to load boundary GeoJSON:', cfg.file, e)
     }
   }))
+
+  // 🖱️ 工程边界图层过滤：勾选单个 → 仅显示该工程，半透明实色填充 + 高亮边框
+  window.projectLayerConfigs = projectLayerConfigs
+  window.filterBoundaryProject = function (projectId) {
+    window.__boundaryFilter = projectId
+    const isActive = (currentIndex.value === 2)
+    Object.entries(boundaryLayers).forEach(([id, layer]) => {
+      if (!projectId) {
+        // 全部显示：默认样式（2px边框 + 半透明填充）
+        const cfg = projectLayerConfigs.find(c => c.id === id)
+        if (cfg) {
+          layer.setStyle(new Style({
+            stroke: new Stroke({ color: cfg.color, width: 2 }),
+            fill: new Fill({ color: cfg.color + '4D' })
+          }))
+        }
+        layer.setVisible(isActive)
+      } else if (id === projectId) {
+        // 选中工程：高亮宽边框 + 不变填充
+        const cfg = projectLayerConfigs.find(c => c.id === id)
+        if (cfg) {
+          layer.setStyle(new Style({
+            stroke: new Stroke({ color: cfg.color, width: 4 }),
+            fill: new Fill({ color: cfg.color + '4D' })
+          }))
+        }
+        layer.setVisible(isActive)
+      } else {
+        layer.setVisible(false)
+      }
+    })
+  }
 
   map = new Map({
     target: 'ol-map-container',
@@ -347,8 +347,13 @@ function switchPage(index) {
   if (forestWmsLayer) {
     forestWmsLayer.setVisible(index === 1)
   }
-  // 🗺️ 工程边界层：第二篇章”重大生态工程”（索引为 2）时全部显示
-  Object.values(boundaryLayers).forEach(l => l.setVisible(index === 2))
+  // 🗺️ 工程边界层：第二篇章”重大生态工程”（索引为 2）时按过滤状态显示
+  const filterId = window.__boundaryFilter
+  if (index === 2 && filterId) {
+    window.filterBoundaryProject(filterId)
+  } else {
+    window.filterBoundaryProject(null)
+  }
   if (!view) return
   
   if (index === 0 || index === 2) {
