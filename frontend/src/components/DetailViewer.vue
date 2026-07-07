@@ -150,20 +150,18 @@ onMounted(() => {
   const appNavBar = document.querySelector('.top-minimal-nav-bar')
   if (appNavBar) appNavBar.style.display = 'none'
 
+  // 仅显示当前工程的边界（高亮实色填充，由 filterBoundaryProject 统一处理）
+  if (window.filterBoundaryProject) {
+    window.filterBoundaryProject(targetId.value)
+  }
+  // 🗺️ 保持全国视角居中偏右，左侧面板不遮挡中国大陆
   const map = window.olMap
-  const boundaryLayers = window.boundaryLayers
-  if (map && boundaryLayers) {
-    Object.entries(boundaryLayers).forEach(([id, layer]) => {
-      layer.setVisible(id === targetId.value)
+  if (map && window.ol) {
+    map.getView().animate({
+      center: window.ol.proj.fromLonLat([96.0, 37.0]),
+      zoom: 4.5,
+      duration: 1200
     })
-    // 🗺️ 保持全国视角居中偏右，左侧面板不遮挡中国大陆
-    if (window.ol) {
-      map.getView().animate({
-        center: window.ol.proj.fromLonLat([96.0, 37.0]),
-        zoom: 4.5,
-        duration: 1200
-      })
-    }
   }
   startCarousel()
 })
@@ -172,10 +170,6 @@ onUnmounted(() => {
   stopCarousel()
   const appNavBar = document.querySelector('.top-minimal-nav-bar')
   if (appNavBar) appNavBar.style.display = 'flex'
-  const boundaryLayers = window.boundaryLayers
-  if (boundaryLayers) {
-    Object.values(boundaryLayers).forEach(l => l.setVisible(true))
-  }
   // 🗺️ 返回时缩放到全国范围
   const map = window.olMap
   if (map && window.ol) {
@@ -194,6 +188,9 @@ function onVideoError(e) {
   // iframe 加载失败，静默处理
 }
 function goBack() {
+  stopCarousel()
+  // 先清状态，再导航
+  if (window.filterBoundaryProject) window.filterBoundaryProject(null)
   router.push('/')
 }
 </script>
