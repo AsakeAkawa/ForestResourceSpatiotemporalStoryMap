@@ -222,7 +222,7 @@ onMounted(() => {
     const vectorSource = new VectorSource()
     const vectorLayer = new VectorLayer({
       visible: false,
-      zIndex: 998,
+      zIndex: 2000,
       source: vectorSource,
       style: new Style({
         stroke: new Stroke({ color: cfg.color, width: 2 }),

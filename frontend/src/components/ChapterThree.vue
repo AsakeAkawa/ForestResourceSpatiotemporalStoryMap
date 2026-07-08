@@ -132,12 +132,6 @@
           <div class="status-badge apple-blur-panel text-glow-green">
             {{ activeSection === 'index' ? '📡 单期辐射反演状态' : '📡 时空两期差分状态' }}
           </div>
-          <div class="spatial-info apple-blur-panel">
-            <p class="coordinate-text">中心坐标: 108°17'E, 40°11'N | 投影系: WGS 84 / UTM zone 49N</p>
-            <p class="target-text text-glow-green">
-              当前观测：{{ activeSection === 'index' ? `${calcConfig.year}年 / 区域: ${calcConfig.region} / 指标: ${calcConfig.indicator}` : `时段: ${compareConfig.startYear}-${compareConfig.endYear} / 指标: ${compareConfig.indicator} 差分` }}
-            </p>
-          </div>
         </div>
 
         <div class="gis-legend apple-blur-panel">
@@ -465,9 +459,6 @@ const executeExport = async (format) => {
 
 /* 悬浮窗体强化 */
 .status-badge { position: absolute; top: 16px; left: 16px; padding: 8px 14px; border-radius: 8px; font-size: 12.5px; pointer-events: auto; }
-.spatial-info { position: absolute; bottom: 16px; left: 16px; font-family: monospace; line-height: 1.5; padding: 10px 14px; border-radius: 8px; }
-.coordinate-text { font-size: 11.5px; color: rgba(255,255,255,0.55); margin: 0; text-shadow: 0 1px 2px rgba(0,0,0,0.6); }
-.target-text { font-size: 13px; margin-top: 3px; margin-bottom: 0; }
 
 .gis-loading-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; pointer-events: none; }
 .load-box { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 36px; border-radius: 12px; min-width: 340px; }

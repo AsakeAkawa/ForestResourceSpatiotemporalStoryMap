@@ -114,10 +114,18 @@ let lastHoveredId = null
 const defaultStyleCache = {}
 
 function makeHoverStyle(color) {
-  return new Style({
-    stroke: new Stroke({ color, width: 5 }),
-    fill: new Fill({ color: color + '66' })
-  })
+  return [
+    // 外发光：宽白色半透明描边
+    new Style({
+      stroke: new Stroke({ color: 'rgba(255,255,255,0.8)', width: 6 }),
+      fill: new Fill({ color: color + '80' })
+    }),
+    // 内层：原色粗描边
+    new Style({
+      stroke: new Stroke({ color, width: 3 }),
+      fill: new Fill({ color: color + '40' })
+    })
+  ]
 }
 
 function handlePointerMove(evt) {
