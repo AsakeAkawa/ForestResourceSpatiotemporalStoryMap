@@ -104,10 +104,6 @@
       </div>
     </div>
 
-    <!-- 右上角 -->
-    <div class="map-top-right-vacuum-zone">
-      <div class="vacuum-gis-tip">[ 实时联动：OpenLayers WMS 工程边界已加载 ]</div>
-    </div>
 
   </div>
 </template>

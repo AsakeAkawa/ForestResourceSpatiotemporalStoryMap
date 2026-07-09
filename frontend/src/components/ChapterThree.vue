@@ -98,7 +98,7 @@
           </div>
 
           <button class="gis-btn btn-warn" :disabled="isComputing" @click="triggerCompare">
-            {{ isComputing ? '正在进行逐像元差分计算...' : '执行两期逐像元差分' }}
+            {{ isComputing ? '正在进行逐像元差分计算...' : '执行空间变化检测' }}
           </button>
         </section>
       </div>
@@ -207,6 +207,26 @@ function apiPath(indicator, year) {
   return `/api/${indicator.toLowerCase()}/${year}`
 }
 
+async function fetchWithRetry(url, ms = 90000, retries = 2) {
+  let lastErr
+  for (let i = 0; i <= retries; i++) {
+    if (i > 0) {
+      setStage(`网络超时，正在重试 (${i}/${retries})...`, progressPct.value)
+      await new Promise(r => setTimeout(r, 1500))
+    }
+    try {
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), ms)
+      const resp = await fetch(url, { signal: ctrl.signal })
+      clearTimeout(timer)
+      return resp
+    } catch (e) {
+      lastErr = e
+    }
+  }
+  throw lastErr
+}
+
 function setStage(stage, pct) { computingStage.value = stage; progressPct.value = pct }
 
 async function triggerGEE() {
@@ -216,12 +236,12 @@ async function triggerGEE() {
     // 4 pre-completion stages, ~6s each = 24s animation to match ~25s real work
     const stages = [
       { text: `正在连接遥感数据服务...`,                       pct:  5 },
-      { text: `正在从 GeoServer 调用 ${y} 年卫星影像...`,      pct: 25 },
+      { text: `正在调用 ${y} 年卫星影像...`,      pct: 25 },
       { text: `影像接收完成，正在计算 ${ind} 指数...`,          pct: 55 },
       { text: `正在渲染专题图色带...`,                          pct: 80 },
     ]
     startProgressAnimation(stages, 6000)
-    const resp = await fetch(apiPath(ind, y))
+    const resp = await fetchWithRetry(apiPath(ind, y))
     if (!resp.ok) {
       let detail = `服务器错误: ${resp.status}`
       try { const e = await resp.json(); detail = e.detail || detail } catch (_) {}
@@ -295,7 +315,7 @@ const triggerCompare = async () => {
   try {
     const stages = makeChangeStages(y1, y2)
     startProgressAnimation(stages, 12000)
-    const resp = await fetch(`/api/change/${y1}/${y2}`)
+    const resp = await fetchWithRetry(`/api/change/${y1}/${y2}`, 180000)
     if (!resp.ok) {
       let detail = `服务器错误: ${resp.status}`
       try { const e = await resp.json(); detail = e.detail || detail } catch (_) {}
@@ -330,7 +350,7 @@ const executeExport = async (format) => {
   const params = new URLSearchParams({ format, indicator, year: String(year) })
   if (year2) params.set('year2', String(year2))
   try {
-    const resp = await fetch(`/api/export?${params}`)
+    const resp = await fetchWithRetry(`/api/export?${params}`)
     if (!resp.ok) throw new Error(`服务器错误: ${resp.status}`)
     const blob = await resp.blob()
     const url = URL.createObjectURL(blob)

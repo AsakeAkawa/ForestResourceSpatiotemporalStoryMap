@@ -22,13 +22,14 @@ EXPORT_H = 480
 # Each: list of (threshold, label, color_hex)
 BINS = {
     "NDVI": [
-        (-1.00, "< -0.2  稀疏/裸地", "#6e4000"),
-        (-0.20, "-0.2 ~ 0",           "#b58a2e"),
-        ( 0.00, "0.0 ~ 0.2  低覆盖",   "#e6c850"),
-        ( 0.20, "0.2 ~ 0.4  中低覆盖", "#b4d264"),
-        ( 0.40, "0.4 ~ 0.6  中覆盖",   "#78b43c"),
-        ( 0.60, "0.6 ~ 0.8  高覆盖",   "#328c1e"),
-        ( 0.80, "0.8 ~ 1.0  极高覆盖", "#0f4610"),
+        (-1.00, "< -0.2", "#6e4000"),    # (110,64,0)
+        (-0.20, "-0.2 ~ 0.0", "#b58a2e"), # (181,138,46)
+        ( 0.00, "0.0 ~ 0.15", "#e6c850"), # (230,200,80)
+        ( 0.15, "0.15 ~ 0.3", "#b4d264"), # (180,210,100)
+        ( 0.30, "0.3 ~ 0.5", "#78b43c"),  # (120,180,60)
+        ( 0.50, "0.5 ~ 0.7", "#328c1e"),  # (50,140,30)
+        ( 0.70, "0.7 ~ 1.0", "#0f4610"),  # (10,100,20)
+        ( 1.00, "1.0",       "#003c0a"),  # (0,60,10)
     ],
     "FVC": [
         (0.00, "0.0 ~ 0.1  裸土",     "#b4965a"),
@@ -93,7 +94,7 @@ def _fetch(year: int, band_names: list[str]):
         f"&SCALESIZE=i({EXPORT_W}),j({EXPORT_H})"
     )
     url = f"{WCS_URL}?{params}"
-    with urllib.request.urlopen(url, timeout=60) as resp:
+    with urllib.request.urlopen(url, timeout=120) as resp:
         data = resp.read()
     with rasterio.open(io.BytesIO(data)) as src:
         arrays = {}
@@ -235,12 +236,15 @@ def _render_with_legend(data: np.ndarray, bins: list, title: str) -> bytes:
 
     for i in range(len(bins) - 1):
         v0, v1 = bins[i][0], bins[i+1][0]
-        mask = valid & (data >= v0) & (data < v1)
+        if i == len(bins) - 2:
+            mask = valid & (data >= v0)  # last segment: include upper bound
+        else:
+            mask = valid & (data >= v0) & (data < v1)
         yy, xx = np.where(mask)
         t = (data[mask] - v0) / (v1 - v0 + 1e-10)
         for ch in range(3):
             c0, c1 = float(colors[i][ch]), float(colors[i+1][ch])
-            rgba[yy, xx, ch] = (c0 + t * (c1 - c0)).astype(np.uint8)
+            rgba[yy, xx, ch] = np.clip(c0 + t * (c1 - c0), 0, 255).astype(np.uint8)
 
     # Alpha: transparent where no data was assigned (still white + no valid pixel)
     assigned = np.any(rgba[:h,:,:3] > 0, axis=2)
