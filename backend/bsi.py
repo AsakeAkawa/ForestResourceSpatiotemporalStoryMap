@@ -46,7 +46,7 @@ def fetch_bsi_bands(year: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.n
     )
     url = f"{WCS_URL}?{params}"
 
-    with urllib.request.urlopen(url, timeout=30) as resp:
+    with urllib.request.urlopen(url, timeout=120) as resp:
         data = resp.read()
 
     with rasterio.open(io.BytesIO(data)) as src:

@@ -107,12 +107,13 @@ let view = null
 const layersPool = {}
 let forestWmsLayer = null // 🌟 全局森林 WMS 图层变量，现在是一个 ImageLayer 实例
 const boundaryLayers = {} // 🗺️ 存储4个重大生态工程边界 TileWMS 图层，key=projectId
+let kubuqiBoundaryLayer = null // 🏜️ 库布齐沙漠边界（篇章三常态化显示）
 
 const currentSourceId = ref('gaode-sat')
 const mapSources = [
-  { id: 'gaode-sat', name: '遥感数据' },
-  { id: 'arcgis-dem', name: '高程数据' },
-  { id: 'gaode-vec', name: '矢量数据' },
+  { id: 'gaode-sat', name: '影像底图' },
+  { id: 'arcgis-dem', name: '地形底图' },
+  { id: 'gaode-vec', name: '街道底图' },
   // { id: 'osm', name: 'OSM底图' }  // 暂时注释，保留恢复可能
 ]
 
@@ -185,23 +186,48 @@ onMounted(() => {
     })
   })
 
-  // 🌈 植被覆盖图层颜色渲染：将灰度图映射为绿色渐变
+  // 🌈 植被覆盖图层颜色渲染：SLD 逐级色彩映射
+  // 数据范围 0-100（百分比），灰度 0=透明，1-100=逐级映射
+  const colorStops = [
+    [  0, 0xff, 0xff, 0xe5],   // #ffffe5 浅黄
+    [ 15, 0xf7, 0xfc, 0xb9],   // #f7fcb9
+    [ 25, 0xd9, 0xf0, 0xa3],   // #d9f0a3
+    [ 30, 0xad, 0xdd, 0x8e],   // #addd8e
+    [ 40, 0x78, 0xc6, 0x79],   // #78c679
+    [ 50, 0x41, 0xab, 0x5d],   // #41ab5d
+    [ 65, 0x23, 0x84, 0x43],   // #238443
+    [ 80, 0x00, 0x68, 0x37],   // #006837
+    [100, 0x00, 0x45, 0x29],   // #004529 深绿
+  ]
+
   forestWmsLayer.on('postrender', (event) => {
     const ctx = event.context
     const canvas = ctx.canvas
     try {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
       const data = imageData.data
-      const GAMMA = 0.35
       for (let i = 0; i < data.length; i += 4) {
         const gray = data[i]
         const alpha = data[i+3]
-        if (alpha === 0 || gray === 0) continue
-        const t = Math.pow(gray / 255, GAMMA)
-        data[i]     = Math.round(240 - t * 225)
-        data[i+1]   = Math.round(235 - t * 165)
-        data[i+2]   = Math.round(210 - t * 195)
-        data[i+3]   = Math.round(80  + t * 175)
+        if (alpha === 0 || gray === 0) {
+          data[i+3] = 0  // 全透明
+          continue
+        }
+        // 灰度 1-255 映射到色带 0-100
+        const pct = gray * 100 / 255
+        // 二分查找色带区间
+        let lo = 0
+        for (let s = colorStops.length - 1; s >= 1; s--) {
+          if (pct >= colorStops[s][0]) { lo = s; break }
+        }
+        const hi = Math.min(lo + 1, colorStops.length - 1)
+        const t = colorStops[hi][0] === colorStops[lo][0] ? 0
+          : (pct - colorStops[lo][0]) / (colorStops[hi][0] - colorStops[lo][0])
+        data[i]     = Math.round(colorStops[lo][1] + t * (colorStops[hi][1] - colorStops[lo][1]))
+        data[i+1]   = Math.round(colorStops[lo][2] + t * (colorStops[hi][2] - colorStops[lo][2]))
+        data[i+2]   = Math.round(colorStops[lo][3] + t * (colorStops[hi][3] - colorStops[lo][3]))
+        // 半透明渐变：覆盖度越高越不透明
+        data[i+3]   = Math.round(169 + pct * 1.11)
       }
       ctx.putImageData(imageData, 0, 0)
     } catch (_) {
@@ -232,6 +258,29 @@ onMounted(() => {
     boundaryLayers[cfg.id] = vectorLayer
   })
   window.boundaryLayers = boundaryLayers
+
+  // 🏜️ 库布齐沙漠边界矢量图层（篇章三常态化显示）
+  const kubuqiSource = new VectorSource()
+  kubuqiBoundaryLayer = new VectorLayer({
+    visible: false,
+    zIndex: 998,
+    source: kubuqiSource,
+    style: new Style({
+      stroke: new Stroke({ color: '#ff6b00', width: 3 }),
+      fill: new Fill({ color: 'rgba(255,107,0,0.08)' })
+    })
+  })
+  // 异步加载 GeoJSON
+  fetch('/data/kubuqi_boundary.geojson')
+    .then(resp => resp.json())
+    .then(geojson => {
+      const features = new GeoJSON().readFeatures(geojson, {
+        dataProjection: 'EPSG:4326',
+        featureProjection: 'EPSG:3857'
+      })
+      kubuqiSource.addFeatures(features)
+    })
+    .catch(e => console.error('Failed to load Kubuqi boundary:', e))
 
   // 异步加载 GeoJSON 数据填充到矢量图层
   Promise.all(projectLayerConfigs.map(async cfg => {
@@ -288,7 +337,8 @@ onMounted(() => {
       layersPool['osm'],
       layersPool['arcgis-dem'],
       forestWmsLayer, // 🌟 将全新的森林单张动态 WMS 图层载入地图
-      ...Object.values(boundaryLayers) // 🗺️ 将边界图层也加入初始 layers 数组
+      ...Object.values(boundaryLayers), // 🗺️ 将边界图层也加入初始 layers 数组
+      kubuqiBoundaryLayer, // 🏜️ 库布齐沙漠边界（仅篇章三显示）
     ],
     view: view,
     controls: []
@@ -346,6 +396,10 @@ function switchPage(index) {
   // 🌟 核心控制：只有在”全国生态时空演变”（篇章索引为 1）时，才激活 WMS 栅格覆盖层
   if (forestWmsLayer) {
     forestWmsLayer.setVisible(index === 1)
+  }
+  // 🏜️ 库布齐边界层：仅篇章三可见
+  if (kubuqiBoundaryLayer) {
+    kubuqiBoundaryLayer.setVisible(index === 3)
   }
   // 🗺️ 工程边界层：第二篇章”重大生态工程”（索引为 2）时按过滤状态显示
   const filterId = window.__boundaryFilter

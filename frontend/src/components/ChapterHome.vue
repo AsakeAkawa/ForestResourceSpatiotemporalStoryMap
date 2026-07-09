@@ -37,7 +37,7 @@
     </div>
 
     <div class="map-audit-info">
-      底图来源：自然资源部标准地图服务（审图号：GS(2024)xxxx号）| 基于 OpenLayers 开放数据测绘
+      底图来源：高德地图 | 森林覆盖数据：CATCD / 中科院空天院
     </div>
   </div>
 </template>
