@@ -100,6 +100,9 @@
           <button class="gis-btn btn-warn" :disabled="isComputing" @click="triggerCompare">
             {{ isComputing ? '正在进行逐像元差分计算...' : '执行空间变化检测' }}
           </button>
+          <button class="gis-btn btn-clear" @click="removeLayer" :disabled="!hasResult">
+            清除结果
+          </button>
         </section>
       </div>
 

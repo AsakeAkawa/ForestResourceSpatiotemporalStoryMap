@@ -154,8 +154,79 @@ ForestResourceSpatiotemporalStoryMap/
 │   ├── export_module.py            # GeoTIFF / PNG / PDF 导出
 │   └── requirements.txt
 │
-└── 第二组-概要设计说明书V1.0.docx
+└── README.md
 ```
+
+---
+
+## 代码速查 / Code Reference
+
+### 前端核心函数 (App.vue)
+
+| 函数 | 行号 | 说明 |
+|------|------|------|
+| `onMounted()` | L136–373 | 地图初始化、所有图层创建、事件监听 |
+| `switchPage(index)` | L391–420 | 篇章切换：层可见性 + 视图动画 |
+| `updateForestWmsYear(year)` | L130–134 | 切换 WMS 图层年份参数 |
+| `changeMapSource(id)` | L382–389 | 底图类型切换（影像/地形/街道） |
+| `filterBoundaryProject(id)` | L302–330 | 工程边界单选/全选样式切换 |
+| postrender 钩子 | L203–236 | SLD 10 级逐级色带 + Alpha 透明度 |
+
+### 前端组件功能速查
+
+| 组件 | 文件 | 核心功能 |
+|------|------|------|
+| 登录页 | Login.vue | 三段式打字机过场动画、空格跳过、毛玻璃底图 |
+| 首页 | ChapterHome.vue | 品牌大标题、渐变遮罩、底图来源文字 |
+| 篇章一 | ChapterOne.vue | ECharts 四图联动、时间轴面板、年份广播 |
+| 篇章二 | ChapterTwo.vue | 边界 hover/click 交互、图例过滤、档案卡片 |
+| 篇章三 | ChapterThree.vue | 遥感计算 UI、进度条动画、结果叠加、导出 |
+| 详情页 | DetailViewer.vue | 指标卡片、时间轴、视频、照片轮播、文字叙事 |
+
+### 后端 API 路由总览 (main.py)
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/health` | 健康检查 |
+| GET | `/api/bounds` | 库布齐研究区范围与可用年份 |
+| GET/POST | `/api/{ndvi\|fvc\|ndwi\|bsi\|rsei}/{year}` | 遥感指数 PNG + 地理边界头 |
+| GET | `/api/change/{y1}/{y2}` | 双时相 NDVI 逐像元差分 |
+| GET | `/api/export?format={TIFF\|PNG\|PDF}` | 分析结果导出 |
+| GET | `/api/info/{year}` | 年份卫星/波段信息 |
+
+### 遥感计算模块公式
+
+| 模块 | 核心函数 | 公式/方法 |
+|------|------|------|
+| ndvi.py | `calc_ndvi()` | $\text{NDVI} = (\text{NIR} - \text{Red}) / (\text{NIR} + \text{Red})$ |
+| fvc.py | `calc_fvc()` | $\text{FVC} = (\text{NDVI} - \text{NDVI}_5)/(\text{NDVI}_{95} - \text{NDVI}_5)$，百分位法 |
+| ndwi.py | `calc_ndwi()` | $\text{NDWI} = (\text{Green} - \text{NIR}) / (\text{Green} + \text{NIR})$ |
+| bsi.py | `calc_bsi()` | $\text{BSI} = ((\text{SWIR1}+\text{Red}) - (\text{NIR}+\text{Blue})) / ((\text{SWIR1}+\text{Red}) + (\text{NIR}+\text{Blue}))$ |
+| rsei.py | `pca_first_component()` | NDVI + WET + NDBSI → PCA 降维 → $\text{RSEI} = 1 - \text{PC1}_\text{norm}$ |
+| change_detection.py | `calc_change()` | $\Delta\text{NDVI} = \text{NDVI}_{\text{year2}} - \text{NDVI}_{\text{year1}}$ |
+| export_module.py | `export_geotiff()` | Float32 单波段 GeoTIFF，LZW 压缩，EPSG:4326 |
+
+### 图层 Z-Index 层级
+
+| zIndex | 图层 | 可见篇章 |
+|--------|------|------|
+| 1 | 底图瓦片（高德卫星/矢量、Esri 地形） | 全篇 |
+| 998 | 库布齐沙漠边界 | 篇章三 |
+| 999 | 全国森林覆盖 WMS | 篇章一 |
+| 1000 | 遥感计算结果图层 | 篇章三 |
+| 2000 | 重大工程边界 | 篇章二 |
+
+### 资源文件
+
+| 路径 | 规模 | 用途 |
+|------|------|------|
+| `public/data/sanbei.geojson` | ~13MB | 三北防护林边界 |
+| `public/data/tianranlin.geojson` | ~13MB | 天然林保护边界 |
+| `public/data/tuigenghuanlin.geojson` | ~13MB | 退耕还林边界 |
+| `public/data/tumuhauncao.geojson` | ~13MB | 退牧还草边界 |
+| `public/data/kubuqi_boundary.geojson` | ~448KB | 库布齐沙漠边界 |
+| `src/assets/data/ecoprojects.json` | ~25KB | 工程全文数据（描述/指标/媒体/时间轴） |
+| `public/images/ecoprojects/` | ~26 张 | 工程实景照片 |
 
 ---
 
@@ -191,19 +262,6 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8000
 > 开发环境下 Vite 代理将 `/api` 转发至 `localhost:8000`，`/geoserver` 转发至阿里云 GeoServer，从而绕过浏览器跨域限制。
 >
 > In development, Vite proxies `/api` → `localhost:8000` and `/geoserver` → Alibaba Cloud GeoServer, bypassing browser CORS restrictions.
-
----
-
-## API 参考 / API Reference
-
-| 方法 Method | 路径 Path | 说明 Description |
-| ----------- | --------- | ---------------- |
-| GET | `/api/health` | 健康检查 Health check |
-| GET | `/api/bounds` | 库布齐研究区范围与可用年份 Study area bounds & available years |
-| GET POST | `/api/{ndvi\|fvc\|ndwi\|bsi\|rsei}/{year}` | 单年遥感指数 (PNG + 地理边界头) Single-year index computation |
-| GET | `/api/change/{year1}/{year2}` | 双时相 NDVI 差分 Bi-temporal NDVI change detection |
-| GET | `/api/export` | 分析结果导出 (TIFF / PNG / PDF) Export analysis results |
-| GET | `/api/info/{year}` | 年份卫星/波段信息 Satellite & band info for a year |
 
 ---
 
