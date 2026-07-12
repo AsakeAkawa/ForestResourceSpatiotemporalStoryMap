@@ -85,7 +85,7 @@ graph TB
 ### 登录页面 / Login Portal
 
 > [!NOTE]
-> **打字机过场动画**是本平台的标志性设计——登录后触发三段式叙事过渡：首段逐字打印中国森林生态成就数据，次段浮现习近平生态文明金句，末段呈现"进入平台"入口。全程支持空格键跳过，暗色毛玻璃背景叠加森林底图，营造沉浸式故事感。
+> **打字机过场动画**是本平台的标志性设计——登录后触发三段式叙事过渡：首段逐字打印中国森林生态成就数据，次段浮现生态文明金句，末段呈现"进入平台"入口。全程支持空格键跳过，暗色毛玻璃背景叠加森林底图，营造沉浸式故事感。
 
 The login portal features a signature **typewriter-style narrative transition**: after authentication, three sequential stages unfold — ecological achievement statistics typed line-by-line, a Xi Jinping quote on ecological civilization, and finally the platform entrance. Spacebar to skip. Dark glassmorphism backdrop over forest imagery creates an immersive storytelling atmosphere.
 
