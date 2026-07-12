@@ -87,14 +87,14 @@ graph TB
 > [!NOTE]
 > **打字机过场动画**是本平台的标志性设计——登录后触发三段式叙事过渡：首段逐字打印中国森林生态成就数据，次段浮现生态文明金句，末段呈现"进入平台"入口。全程支持空格键跳过，暗色毛玻璃背景叠加森林底图，营造沉浸式故事感。
 
-The login portal features a signature **typewriter-style narrative transition**: after authentication, three sequential stages unfold — ecological achievement statistics typed line-by-line, a quote on ecological civilization, and finally the platform entrance. Spacebar to skip. Dark glassmorphism backdrop over forest imagery creates an immersive storytelling atmosphere.
+> The login portal features a signature **typewriter-style narrative transition**: after authentication, three sequential stages unfold — ecological achievement statistics typed line-by-line, a quote on ecological civilization, and finally the platform entrance. Spacebar to skip. Dark glassmorphism backdrop over forest imagery creates an immersive storytelling atmosphere.
 
 ### 篇章〇 · 首页 / Chapter 0 · Home
 
 > [!NOTE]
 > 平台门户页面，左侧 45% 区域呈现深绿渐变遮罩 + 毛玻璃质感，承载项目标题"山河复翠"（渐变金绿大字）、副标题、项目背景与内容概述。右侧透出全幅卫星底图。底部附团队信息与审图号标注。
 
-The landing page displays the project title "山河复翠" (Landscape Revitalized) in gradient gold-green typography, with project background and content overview on a dark gradient mask covering the left 45% of the viewport. The right side reveals the full satellite basemap.
+> The landing page displays the project title "山河复翠" (Landscape Revitalized) in gradient gold-green typography, with project background and content overview on a dark gradient mask covering the left 45% of the viewport. The right side reveals the full satellite basemap.
 
 ### 篇章一 · 全国生态时空演变 (1985–2024) / Chapter 1 · National Forest Spatiotemporal Evolution
 
